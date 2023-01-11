@@ -1,4 +1,4 @@
-package container
+package userService
 
 import (
 	"github.com/go-chi/chi/v5"

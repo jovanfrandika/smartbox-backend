@@ -10,7 +10,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jovanfrandika/smartbox-backend/pkg/common/config"
-	userContainer "github.com/jovanfrandika/smartbox-backend/pkg/user"
+	deviceService "github.com/jovanfrandika/smartbox-backend/pkg/device/service"
+	userService "github.com/jovanfrandika/smartbox-backend/pkg/user/service"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -41,13 +42,17 @@ func main() {
 	r := chi.NewRouter()
 
 	userRouter := chi.NewRouter()
-	userContainer.Init(db, userRouter, config.Cfg)
+	userService.Init(db, userRouter, config.Cfg)
+
+	deviceRouter := chi.NewRouter()
+	deviceService.Init(db, deviceRouter, config.Cfg)
 
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("pong"))
 	})
 	r.Mount("/user", userRouter)
+	r.Mount("/device", deviceRouter)
 
 	http.ListenAndServe(":8000", r)
 
