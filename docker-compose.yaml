@@ -1,0 +1,68 @@
+version: '3.7'
+services:
+  db:
+    image: mongo:latest
+    container_name: mongo
+    env_file:
+      - ./.env
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo:/data/db
+    networks:
+      - smartbox
+  
+  main:
+    build: 
+      context: .
+      dockerfile: ./docker/main/Dockerfile
+    container_name: main
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    networks:
+      - smartbox
+    depends_on:
+      - db
+
+  # consumer:
+  #   build: 
+  #     context: .
+  #     dockerfile: ./docker/consumer/Dockerfile
+  #   container_name: consumer 
+  #   env_file:
+  #     - .env
+  #   restart: unless-stopped
+  #   networks:
+  #     - smartbox
+  #   depends_on:
+  #     - db
+
+  migrate: &basemigrate
+    profiles: ["tools"]
+    image: migrate/migrate
+    entrypoint: "migrate -path /tmp/migrations -database mongodb://mongo:27017/${DB_NAME}"
+    command: up
+    env_file:
+      - ./.env
+    networks:
+      - smartbox
+    depends_on:
+      - db
+    volumes:
+      - ./db/migration:/tmp/migrations
+
+  create-migration:
+    <<: *basemigrate
+    entrypoint: migrate create -dir /tmp/migrations -ext json
+    command: ""
+
+volumes:
+  mongo:
+
+networks:
+  smartbox:
+    name: smartbox
+    external: true
