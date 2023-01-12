@@ -72,6 +72,45 @@ func (r *mongoDb) GetUser(ctx context.Context, id string) (model.User, error) {
 	}, nil
 }
 
+func (r *mongoDb) GetMany(ctx context.Context, userIDs []string) ([]model.User, error) {
+	userObjectIDs := []primitive.ObjectID{}
+	for _, userID := range userIDs {
+		userObjectID, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			return []model.User{}, err
+		}
+		userObjectIDs = append(userObjectIDs, userObjectID)
+	}
+
+	cursor, err := r.DbCollection.Find(ctx, bson.M{idField: bson.M{"$in": userObjectIDs}}, nil)
+	if err != nil {
+		return []model.User{}, err
+	}
+	defer cursor.Close(nil)
+
+	var output []model.User
+	for cursor.Next(ctx) {
+		var elem User
+		err := cursor.Decode(&elem)
+		if err != nil {
+			return []model.User{}, err
+		}
+
+		output = append(output, model.User{
+			ID:    elem.ID.Hex(),
+			Name:  elem.Name,
+			Email: elem.Email,
+			Role:  elem.Role,
+		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		return []model.User{}, err
+	}
+
+	return output, nil
+}
+
 func (r *mongoDb) Login(ctx context.Context, loginInput model.LoginInput) (model.User, error) {
 	var res User
 	err := r.DbCollection.FindOne(ctx, bson.M{emailField: loginInput.Email}).Decode(&res)

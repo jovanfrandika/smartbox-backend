@@ -6,12 +6,10 @@ import (
 	"github.com/jovanfrandika/smartbox-backend/pkg/user/delivery/http"
 	rMongo "github.com/jovanfrandika/smartbox-backend/pkg/user/repository/mongo"
 	"github.com/jovanfrandika/smartbox-backend/pkg/user/usecase"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func Init(db *mongo.Database, r *chi.Mux, cfg *config.Config) {
-	mongoRepo := rMongo.New(db)
-	userUsecase := usecase.New(cfg, &mongoRepo)
+func Init(userDb *rMongo.MongoDb, r *chi.Mux, cfg *config.Config) {
+	userUsecase := usecase.New(cfg, userDb)
 
 	http.Deliver(r, userUsecase)
 }

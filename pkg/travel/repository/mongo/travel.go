@@ -44,13 +44,13 @@ const (
 )
 
 func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Travel, error) {
-	docId, err := primitive.ObjectIDFromHex(id)
+	docID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return model.Travel{}, err
 	}
 
 	var res Travel
-	err = r.DbCollection.FindOne(ctx, bson.M{idField: docId}).Decode(&res)
+	err = r.DbCollection.FindOne(ctx, bson.M{idField: docID}).Decode(&res)
 	if err != nil {
 		return model.Travel{}, err
 	}

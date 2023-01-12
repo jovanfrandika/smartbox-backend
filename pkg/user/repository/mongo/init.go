@@ -14,6 +14,7 @@ type mongoDb struct {
 type MongoDb interface {
 	CreateUser(ctx context.Context, registerInput model.RegisterInput) (string, error)
 	GetUser(ctx context.Context, id string) (model.User, error)
+	GetMany(ctx context.Context, userIDs []string) ([]model.User, error)
 	Login(ctx context.Context, loginInput model.LoginInput) (model.User, error)
 }
 

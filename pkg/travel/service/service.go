@@ -7,12 +7,10 @@ import (
 	"github.com/jovanfrandika/smartbox-backend/pkg/travel/delivery/http"
 	rMongo "github.com/jovanfrandika/smartbox-backend/pkg/travel/repository/mongo"
 	"github.com/jovanfrandika/smartbox-backend/pkg/travel/usecase"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func Init(db *mongo.Database, r *chi.Mux, cfg *config.Config, storageClient *storage.Client) {
-	mongoRepo := rMongo.New(db)
-	travelUsecase := usecase.New(cfg, &mongoRepo, storageClient)
+func Init(travelDb *rMongo.MongoDb, r *chi.Mux, cfg *config.Config, storageClient *storage.Client) {
+	travelUsecase := usecase.New(cfg, travelDb, storageClient)
 
 	http.Deliver(r, travelUsecase)
 }
