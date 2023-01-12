@@ -8,13 +8,16 @@ import (
 	"syscall"
 	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jovanfrandika/smartbox-backend/pkg/common/config"
 	deviceService "github.com/jovanfrandika/smartbox-backend/pkg/device/service"
+	travelService "github.com/jovanfrandika/smartbox-backend/pkg/travel/service"
 	userService "github.com/jovanfrandika/smartbox-backend/pkg/user/service"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/api/option"
 )
 
 const (
@@ -38,8 +41,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db := client.Database(dbName)
+	db := client.Database(config.Cfg.DBName)
 	r := chi.NewRouter()
+
+	storageClient, err := storage.NewClient(context.TODO(), option.WithCredentialsFile("files/service-account.json"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer storageClient.Close()
 
 	userRouter := chi.NewRouter()
 	userService.Init(db, userRouter, config.Cfg)
@@ -47,12 +56,16 @@ func main() {
 	deviceRouter := chi.NewRouter()
 	deviceService.Init(db, deviceRouter, config.Cfg)
 
+	travelRouter := chi.NewRouter()
+	travelService.Init(db, travelRouter, config.Cfg, storageClient)
+
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("pong"))
 	})
 	r.Mount("/user", userRouter)
 	r.Mount("/device", deviceRouter)
+	r.Mount("/travel", travelRouter)
 
 	http.ListenAndServe(":8000", r)
 

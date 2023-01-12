@@ -58,13 +58,13 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		jwtToken := authHeader[1]
-		userId, err := ValidateToken(jwtToken, config.Cfg.JWTAccessSecretKey)
+		userID, err := ValidateToken(jwtToken, config.Cfg.JWTAccessSecretKey)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Malformed Token"))
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "userId", userId)))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "userID", userID)))
 	})
 }

@@ -30,6 +30,7 @@ WORKDIR /app/
 
 COPY --from=build /app/bin/main .
 COPY --from=build /app/scripts/entrypoint.main.sh ./entrypoint.sh
+COPY --from=build /app/files/service-account.json ./files/service-account.json
 
 RUN ls -la
 RUN chmod +x ./entrypoint.sh

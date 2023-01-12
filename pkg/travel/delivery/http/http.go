@@ -8,55 +8,16 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/jovanfrandika/smartbox-backend/pkg/user/model"
+	"github.com/jovanfrandika/smartbox-backend/pkg/travel/model"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	TIMEOUT = 5 * time.Second
+	TIMEOUT = 2 * time.Second
 )
 
-func (d *delivery) Me(w h.ResponseWriter, r *h.Request) {
-	var payload model.MeInput
-	userID := r.Context().Value("userID")
-	if reflect.TypeOf(userID).String() != "string" {
-		log.Error("Error: Invalid UserID")
-		w.WriteHeader(h.StatusBadRequest)
-		return
-	}
-
-	payload.ID = fmt.Sprintf("%v", userID)
-
-	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
-
-	var res model.MeResponse
-	var err error
-	ch := make(chan int)
-	go func() {
-		res, err = d.usecase.Me(ctx, payload)
-		ch <- 1
-	}()
-
-	select {
-	case <-ctx.Done():
-		log.Error("Me timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
-		return
-	case <-ch:
-		if err != nil {
-			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(h.StatusOK)
-		json.NewEncoder(w).Encode(res)
-	}
-}
-
-func (d *delivery) Login(w h.ResponseWriter, r *h.Request) {
-	var payload model.LoginInput
+func (d *delivery) CreateOne(w h.ResponseWriter, r *h.Request) {
+	var payload model.CreateOneInput
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
@@ -68,16 +29,120 @@ func (d *delivery) Login(w h.ResponseWriter, r *h.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
 
-	var res model.LoginResponse
 	ch := make(chan int)
 	go func() {
-		res, err = d.usecase.Login(ctx, payload)
+		err = d.usecase.CreateOne(ctx, payload)
 		ch <- 1
 	}()
 
 	select {
 	case <-ctx.Done():
-		log.Error("Login timeout")
+		log.Error("Create one device timeout")
+		h.Error(w, "timeout", h.StatusInternalServerError)
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
+			h.Error(w, err.Error(), h.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(h.StatusCreated)
+	}
+}
+
+func (d *delivery) UpdateOne(w h.ResponseWriter, r *h.Request) {
+	var payload model.UpdateOneInput
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		log.Error("Error: Invalid Payload")
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	ch := make(chan int)
+	go func() {
+		err = d.usecase.UpdateOne(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Update one device timeout")
+		h.Error(w, "timeout", h.StatusInternalServerError)
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
+			h.Error(w, err.Error(), h.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(h.StatusNoContent)
+	}
+}
+
+func (d *delivery) DeleteOne(w h.ResponseWriter, r *h.Request) {
+	var payload model.DeleteOneInput
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		log.Error("Error: Invalid Payload")
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	ch := make(chan int)
+	go func() {
+		err = d.usecase.DeleteOne(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Delete one device timeout")
+		h.Error(w, "timeout", h.StatusInternalServerError)
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
+			h.Error(w, err.Error(), h.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(h.StatusNoContent)
+	}
+}
+
+func (d *delivery) Histories(w h.ResponseWriter, r *h.Request) {
+	var payload model.HistoryInput
+	userID := r.Context().Value("userID")
+	if reflect.TypeOf(userID).String() != "string" {
+		log.Error("Error: Invalid UserID")
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	payload.UserID = fmt.Sprintf("%v", userID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	var res model.HistoryResponse
+	var err error
+	ch := make(chan int)
+	go func() {
+		res, err = d.usecase.Histories(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Histories timeout")
 		h.Error(w, "timeout", h.StatusInternalServerError)
 		return
 	case <-ch:
@@ -92,8 +157,8 @@ func (d *delivery) Login(w h.ResponseWriter, r *h.Request) {
 	}
 }
 
-func (d *delivery) Register(w h.ResponseWriter, r *h.Request) {
-	var payload model.RegisterInput
+func (d *delivery) GetPhotoSignedUrl(w h.ResponseWriter, r *h.Request) {
+	var payload model.GetPhotoSignedUrlInput
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
@@ -105,62 +170,24 @@ func (d *delivery) Register(w h.ResponseWriter, r *h.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
 
-	var res model.RegisterResponse
+	var res model.GetPhotoSignedUrlResponse
 	ch := make(chan int)
 	go func() {
-		res, err = d.usecase.Register(ctx, payload)
+		res, err = d.usecase.GetPhotoSignedUrl(ctx, payload)
 		ch <- 1
 	}()
 
 	select {
 	case <-ctx.Done():
-		log.Error("Register timeout")
+		log.Error("Delete one device timeout")
 		h.Error(w, "timeout", h.StatusInternalServerError)
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Register failed, Error: %v", err))
+			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
 			h.Error(w, err.Error(), h.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(h.StatusOK)
-		json.NewEncoder(w).Encode(res)
-	}
-}
-
-func (d *delivery) RefreshAccessToken(w h.ResponseWriter, r *h.Request) {
-	var payload model.RefreshInput
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&payload)
-	if err != nil {
-		log.Error("Error: Invalid Payload")
-		w.WriteHeader(h.StatusBadRequest)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-	defer cancel()
-
-	var res model.RefreshResponse
-	ch := make(chan int)
-	go func() {
-		res, err = d.usecase.RefreshAccessToken(ctx, payload)
-		ch <- 1
-	}()
-
-	select {
-	case <-ctx.Done():
-		log.Error("Refresh Access Token timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
-		return
-	case <-ch:
-		if err != nil {
-			log.Error(fmt.Sprintf("Refresh Access Token failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(h.StatusOK)
 		json.NewEncoder(w).Encode(res)
 	}

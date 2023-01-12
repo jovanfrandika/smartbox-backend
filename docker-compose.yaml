@@ -8,9 +8,10 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - mongo:/data/db
+      - ./db/data:/data/db
     networks:
       - smartbox
+    restart: unless-stopped
   
   main:
     build: 
@@ -58,9 +59,6 @@ services:
     <<: *basemigrate
     entrypoint: migrate create -dir /tmp/migrations -ext json
     command: ""
-
-volumes:
-  mongo:
 
 networks:
   smartbox:

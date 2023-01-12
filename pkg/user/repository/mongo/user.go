@@ -46,20 +46,20 @@ func (r *mongoDb) CreateUser(ctx context.Context, registerInput model.RegisterIn
 	}
 
 	if oid, ok := res.InsertedID.(primitive.ObjectID); ok {
-		return oid.String(), nil
+		return oid.Hex(), nil
 	}
 
 	return "", errors.New("No oid")
 }
 
 func (r *mongoDb) GetUser(ctx context.Context, id string) (model.User, error) {
-	docId, err := primitive.ObjectIDFromHex(id)
+	docID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return model.User{}, err
 	}
 
 	var res User
-	err = r.DbCollection.FindOne(ctx, bson.M{idField: docId}).Decode(&res)
+	err = r.DbCollection.FindOne(ctx, bson.M{idField: docID}).Decode(&res)
 	if err != nil {
 		return model.User{}, err
 	}
