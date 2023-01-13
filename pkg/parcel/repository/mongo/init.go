@@ -3,7 +3,7 @@ package rMongo
 import (
 	"context"
 
-	"github.com/jovanfrandika/smartbox-backend/pkg/travel/model"
+	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -12,15 +12,15 @@ type mongoDb struct {
 }
 
 type MongoDb interface {
-	GetOne(ctx context.Context, id string) (model.Travel, error)
+	GetOne(ctx context.Context, id string) (model.Parcel, error)
 	CreateOne(ctx context.Context, createOneInput model.CreateOneInput) (string, error)
 	UpdateOne(ctx context.Context, updateOneInput model.UpdateOneInput) error
 	DeleteOne(ctx context.Context, deleteOneInput model.DeleteOneInput) error
-	Histories(ctx context.Context, historyInput model.HistoryInput) ([]model.Travel, error)
+	Histories(ctx context.Context, historyInput model.HistoryInput) ([]model.Parcel, error)
 }
 
 const (
-	collectionName = "travel"
+	collectionName = "parcel"
 )
 
 func New(dbClient *mongo.Database) MongoDb {

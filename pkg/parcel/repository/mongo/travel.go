@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jovanfrandika/smartbox-backend/pkg/travel/model"
+	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -15,15 +15,17 @@ type Coordinate struct {
 	Long float32 `bson:"long,omitempty"`
 }
 
-type Travel struct {
+type Parcel struct {
 	ID          primitive.ObjectID `bson:"_id"`
 	Name        string             `bson:"name,omitempty"`
 	Description string             `bson:"description,omitempty"`
 	PhotoUri    string             `bson:"photo_uri,omitempty"`
-	Start       Coordinate         `bson:"start,omitempty"`
-	End         Coordinate         `bson:"end,omitempty"`
+	Start       *Coordinate        `bson:"start,omitempty"`
+	End         *Coordinate        `bson:"end,omitempty"`
 	ReceiverID  primitive.ObjectID `bson:"receiver_id,omitempty"`
 	SenderID    primitive.ObjectID `bson:"sender_id,omitempty"`
+	CourierID   primitive.ObjectID `bson:"courier_id,omitempty"`
+	DeviceID    primitive.ObjectID `bson:"device_id,omitempty"`
 	Status      int                `bson:"status,omitempty"`
 }
 
@@ -34,36 +36,59 @@ const (
 	photoUriField    = "photo_uri"
 	startField       = "start"
 	endField         = "end"
-	recieverIdField  = "reciever_id"
+	receiverIdField  = "receiver_id"
 	senderIdField    = "sender_id"
+	courierIdField   = "courier_id"
+	deviceIdField    = "device_id"
 	statusField      = "status"
 
-	DRAFT_STATUS    = 0
-	ON_GOING_STATUS = 1
-	DONE_STATUS     = 2
+	DRAFT_STATUS               = 0
+	WAITING_FOR_COURIER_STATUS = 1
+	PICK_UP_STATUS             = 2
+	ON_GOING_STATUS            = 3
+	ARRIVED_STATUS             = 4
+	DONE_STATUS                = 5
+
+	EmptyObjectId = "000000000000"
 )
 
-func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Travel, error) {
+func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Parcel, error) {
 	docID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return model.Travel{}, err
+		return model.Parcel{}, err
 	}
 
-	var res Travel
+	var res Parcel
 	err = r.DbCollection.FindOne(ctx, bson.M{idField: docID}).Decode(&res)
 	if err != nil {
-		return model.Travel{}, err
+		return model.Parcel{}, err
 	}
 
-	return model.Travel{
+	var start *model.Coordinate
+	if res.Start != nil {
+		start = &model.Coordinate{
+			Lat:  res.Start.Lat,
+			Long: res.Start.Long,
+		}
+	}
+	var end *model.Coordinate
+	if res.End != nil {
+		end = &model.Coordinate{
+			Lat:  res.End.Lat,
+			Long: res.End.Long,
+		}
+	}
+
+	return model.Parcel{
 		ID:          res.ID.Hex(),
 		Name:        res.Name,
 		Description: res.Description,
 		PhotoUri:    res.PhotoUri,
-		Start:       model.Coordinate(res.Start),
-		End:         model.Coordinate(res.End),
+		Start:       start,
+		End:         end,
 		ReceiverID:  res.ReceiverID.Hex(),
 		SenderID:    res.SenderID.Hex(),
+		CourierID:   res.CourierID.Hex(),
 		Status:      res.Status,
 	}, nil
 }
@@ -76,6 +101,11 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		return "", err
 	}
 
+	emptyID, err := primitive.ObjectIDFromHex(EmptyObjectId)
+	if err != nil {
+		return "", err
+	}
+
 	doc := bson.D{
 		primitive.E{Key: idField, Value: docID},
 		primitive.E{Key: nameField, Value: ""},
@@ -83,8 +113,10 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		primitive.E{Key: photoUriField, Value: fmt.Sprintf("%s/%s.jpg", createOneInput.SenderID, docID.Hex())},
 		primitive.E{Key: startField, Value: nil},
 		primitive.E{Key: endField, Value: nil},
-		primitive.E{Key: recieverIdField, Value: nil},
+		primitive.E{Key: receiverIdField, Value: emptyID},
 		primitive.E{Key: senderIdField, Value: senderID},
+		primitive.E{Key: courierIdField, Value: emptyID},
+		primitive.E{Key: deviceIdField, Value: emptyID},
 		primitive.E{Key: statusField, Value: DRAFT_STATUS},
 	}
 
@@ -111,6 +143,21 @@ func (r *mongoDb) UpdateOne(ctx context.Context, updateOneInput model.UpdateOneI
 		return err
 	}
 
+	recieverID, err := primitive.ObjectIDFromHex(updateOneInput.ReceiverID)
+	if err != nil {
+		return err
+	}
+
+	courierID, err := primitive.ObjectIDFromHex(updateOneInput.CourierID)
+	if err != nil {
+		return err
+	}
+
+	deviceID, err := primitive.ObjectIDFromHex(updateOneInput.CourierID)
+	if err != nil {
+		return err
+	}
+
 	update := bson.D{
 		primitive.E{Key: nameField, Value: updateOneInput.Name},
 		primitive.E{Key: descriptionField, Value: updateOneInput.Description},
@@ -118,15 +165,10 @@ func (r *mongoDb) UpdateOne(ctx context.Context, updateOneInput model.UpdateOneI
 		primitive.E{Key: startField, Value: updateOneInput.Start},
 		primitive.E{Key: endField, Value: updateOneInput.End},
 		primitive.E{Key: senderIdField, Value: senderID},
+		primitive.E{Key: receiverIdField, Value: recieverID},
+		primitive.E{Key: courierIdField, Value: courierID},
+		primitive.E{Key: deviceIdField, Value: deviceID},
 		primitive.E{Key: statusField, Value: DRAFT_STATUS},
-	}
-
-	if updateOneInput.ReceiverID != "" {
-		recieverID, err := primitive.ObjectIDFromHex(updateOneInput.ReceiverID)
-		if err != nil {
-			return err
-		}
-		update = append(update, primitive.E{Key: recieverIdField, Value: recieverID})
 	}
 
 	filter := bson.D{primitive.E{Key: idField, Value: docID}}
@@ -153,59 +195,66 @@ func (r *mongoDb) DeleteOne(ctx context.Context, deleteOneInput model.DeleteOneI
 	return nil
 }
 
-func (r *mongoDb) Histories(ctx context.Context, historyInput model.HistoryInput) ([]model.Travel, error) {
+func (r *mongoDb) Histories(ctx context.Context, historyInput model.HistoryInput) ([]model.Parcel, error) {
 	userID, err := primitive.ObjectIDFromHex(historyInput.UserID)
 	if err != nil {
-		return []model.Travel{}, err
+		return []model.Parcel{}, err
 	}
 
 	filter := bson.D{
 		{"$or",
 			bson.A{
-				bson.D{{recieverIdField, bson.D{{"$eq", userID}}}},
+				bson.D{{receiverIdField, bson.D{{"$eq", userID}}}},
 				bson.D{{senderIdField, bson.D{{"$eq", userID}}}},
 			},
 		},
 	}
 	cursor, err := r.DbCollection.Find(ctx, filter, nil)
 	if err != nil {
-		return []model.Travel{}, err
+		return []model.Parcel{}, err
 	}
 	defer cursor.Close(nil)
 
-	var output []model.Travel
+	var output []model.Parcel
 	for cursor.Next(ctx) {
-		var elem Travel
+		var elem Parcel
 		err := cursor.Decode(&elem)
 		if err != nil {
-			return []model.Travel{}, err
+			return []model.Parcel{}, err
 		}
 
-		receiverID := ""
-		if elem.ReceiverID != primitive.NilObjectID {
-			receiverID = elem.ReceiverID.Hex()
+		var start *model.Coordinate
+		if elem.Start != nil {
+			start = &model.Coordinate{
+				Lat:  elem.Start.Lat,
+				Long: elem.Start.Long,
+			}
+		}
+		var end *model.Coordinate
+		if elem.End != nil {
+			end = &model.Coordinate{
+				Lat:  elem.End.Lat,
+				Long: elem.End.Long,
+			}
 		}
 
-		senderID := ""
-		if elem.SenderID != primitive.NilObjectID {
-			senderID = elem.SenderID.Hex()
-		}
-
-		output = append(output, model.Travel{
+		output = append(output, model.Parcel{
 			ID:          elem.ID.Hex(),
 			Name:        elem.Name,
 			Description: elem.Description,
 			PhotoUri:    elem.PhotoUri,
-			Start:       model.Coordinate(elem.Start),
-			End:         model.Coordinate(elem.End),
-			ReceiverID:  receiverID,
-			SenderID:    senderID,
+			Start:       start,
+			End:         end,
+			ReceiverID:  elem.ReceiverID.Hex(),
+			SenderID:    elem.SenderID.Hex(),
+			CourierID:   elem.CourierID.Hex(),
+			DeviceID:    elem.DeviceID.Hex(),
 			Status:      elem.Status,
 		})
 	}
 
 	if err := cursor.Err(); err != nil {
-		return []model.Travel{}, err
+		return []model.Parcel{}, err
 	}
 
 	return output, nil

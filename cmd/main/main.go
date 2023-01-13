@@ -15,8 +15,8 @@ import (
 	deviceService "github.com/jovanfrandika/smartbox-backend/pkg/device/service"
 	rFriendshipMongo "github.com/jovanfrandika/smartbox-backend/pkg/friendship/repository/mongo"
 	friendshipService "github.com/jovanfrandika/smartbox-backend/pkg/friendship/service"
-	rTravelMongo "github.com/jovanfrandika/smartbox-backend/pkg/travel/repository/mongo"
-	travelService "github.com/jovanfrandika/smartbox-backend/pkg/travel/service"
+	rParcelMongo "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
+	parcelService "github.com/jovanfrandika/smartbox-backend/pkg/parcel/service"
 	rUserMongo "github.com/jovanfrandika/smartbox-backend/pkg/user/repository/mongo"
 	userService "github.com/jovanfrandika/smartbox-backend/pkg/user/service"
 	log "github.com/sirupsen/logrus"
@@ -55,7 +55,7 @@ func main() {
 
 	userDb := rUserMongo.New(db)
 	friendshipDb := rFriendshipMongo.New(db)
-	travelDb := rTravelMongo.New(db)
+	parcelDb := rParcelMongo.New(db)
 	deviceDb := rDeviceMongo.New(db)
 
 	userRouter := chi.NewRouter()
@@ -64,8 +64,8 @@ func main() {
 	deviceRouter := chi.NewRouter()
 	deviceService.Init(&deviceDb, deviceRouter, config.Cfg)
 
-	travelRouter := chi.NewRouter()
-	travelService.Init(&travelDb, travelRouter, config.Cfg, storageClient)
+	parcelRouter := chi.NewRouter()
+	parcelService.Init(&parcelDb, &userDb, &deviceDb, parcelRouter, config.Cfg, storageClient)
 
 	friendshipRouter := chi.NewRouter()
 	friendshipService.Init(&friendshipDb, &userDb, friendshipRouter, config.Cfg)
@@ -77,7 +77,7 @@ func main() {
 	r.Mount("/user", userRouter)
 	r.Mount("/friendship", friendshipRouter)
 	r.Mount("/device", deviceRouter)
-	r.Mount("/travel", travelRouter)
+	r.Mount("/parcel", parcelRouter)
 
 	http.ListenAndServe(":8000", r)
 

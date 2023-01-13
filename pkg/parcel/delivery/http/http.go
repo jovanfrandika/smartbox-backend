@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/jovanfrandika/smartbox-backend/pkg/travel/model"
+	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
 	log "github.com/sirupsen/logrus"
 )
 

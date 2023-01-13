@@ -3,7 +3,7 @@ package http
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jovanfrandika/smartbox-backend/pkg/common/utils"
-	u "github.com/jovanfrandika/smartbox-backend/pkg/travel/usecase"
+	u "github.com/jovanfrandika/smartbox-backend/pkg/parcel/usecase"
 )
 
 type delivery struct {
@@ -20,4 +20,5 @@ func Deliver(r *chi.Mux, usecase u.Usecase) {
 	(*r).With(utils.AuthMiddleware).Put("/", d.UpdateOne)
 	(*r).With(utils.AuthMiddleware).Delete("/", d.DeleteOne)
 	(*r).With(utils.AuthMiddleware).Get("/photo", d.GetPhotoSignedUrl)
+	(*r).With(utils.AuthMiddleware).Post("/progress", d.UpdateOne)
 }

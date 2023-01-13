@@ -5,13 +5,17 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/jovanfrandika/smartbox-backend/pkg/common/config"
-	"github.com/jovanfrandika/smartbox-backend/pkg/travel/model"
-	rMongo "github.com/jovanfrandika/smartbox-backend/pkg/travel/repository/mongo"
+	rDeviceMongo "github.com/jovanfrandika/smartbox-backend/pkg/device/repository/mongo"
+	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
+	rParcelMongo "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
+	rUserMongo "github.com/jovanfrandika/smartbox-backend/pkg/user/repository/mongo"
 )
 
 type usecase struct {
 	config        *config.Config
-	db            *rMongo.MongoDb
+	parcelDb      *rParcelMongo.MongoDb
+	userDb        *rUserMongo.MongoDb
+	deviceDb      *rDeviceMongo.MongoDb
 	storageClient *storage.Client
 }
 
@@ -24,10 +28,12 @@ type Usecase interface {
 	GetPhotoSignedUrl(ctx context.Context, getPhotoSignedUrlInput model.GetPhotoSignedUrlInput) (model.GetPhotoSignedUrlResponse, error)
 }
 
-func New(config *config.Config, db *rMongo.MongoDb, storageClient *storage.Client) Usecase {
+func New(config *config.Config, parcelDb *rParcelMongo.MongoDb, userDb *rUserMongo.MongoDb, deviceDb *rDeviceMongo.MongoDb, storageClient *storage.Client) Usecase {
 	return &usecase{
 		config:        config,
-		db:            db,
+		parcelDb:      parcelDb,
+		userDb:        userDb,
+		deviceDb:      deviceDb,
 		storageClient: storageClient,
 	}
 }
