@@ -3,10 +3,12 @@ package config
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 )
 
 type Config struct {
+	MqttUrl             *url.URL
 	BucketName          string
 	DBName              string
 	MongoDBUri          string
@@ -27,6 +29,12 @@ func getenvStr(key string) string {
 func Init() {
 	if Cfg == nil {
 		Cfg = &Config{}
+
+		var err error
+		Cfg.MqttUrl, err = url.Parse(getenvStr("MQTT_URL"))
+		if err != nil {
+			log.Fatal(err)
+		}
 		Cfg.BucketName = getenvStr("BUCKET_NAME")
 		Cfg.DBName = getenvStr("DB_NAME")
 		Cfg.MongoDBUri = getenvStr("MONGODB_URI")

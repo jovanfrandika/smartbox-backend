@@ -13,6 +13,8 @@ type mongoDb struct {
 
 type MongoDb interface {
 	CreateOne(ctx context.Context, createOneInput model.CreateOneInput) (string, error)
+	GetMany(ctx context.Context, deviceIDs []string) ([]model.Device, error)
+	GetOne(ctx context.Context, getOneInput model.GetOneInput) (model.Device, error)
 	GetAll(ctx context.Context) ([]model.Device, error)
 }
 

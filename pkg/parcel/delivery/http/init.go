@@ -20,5 +20,6 @@ func Deliver(r *chi.Mux, usecase u.Usecase) {
 	(*r).With(utils.AuthMiddleware).Put("/", d.UpdateOne)
 	(*r).With(utils.AuthMiddleware).Delete("/", d.DeleteOne)
 	(*r).With(utils.AuthMiddleware).Get("/photo", d.GetPhotoSignedUrl)
-	(*r).With(utils.AuthMiddleware).Post("/progress", d.UpdateOne)
+	(*r).With(utils.AuthMiddleware).Post("/progress", d.UpdateProgress)
+	(*r).With(utils.AuthMiddleware).Post("/open", d.OpenDoor)
 }

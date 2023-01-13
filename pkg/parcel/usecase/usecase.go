@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	deviceModel "github.com/jovanfrandika/smartbox-backend/pkg/device/model"
 	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
 	parcelCol "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
 	userModel "github.com/jovanfrandika/smartbox-backend/pkg/user/model"
@@ -19,7 +20,16 @@ func (u *usecase) GetOne(ctx context.Context, getOneInput model.GetOneInput) (mo
 		return model.GetOneResponse{}, err
 	}
 
-	return model.GetOneResponse(res), nil
+	fullParcels, err := u.buildFullParcel(ctx, []model.Parcel{res})
+	if err != nil {
+		return model.GetOneResponse{}, err
+	}
+
+	if len(fullParcels) <= 0 {
+		return model.GetOneResponse{}, errors.New("Parcel Not found")
+	}
+
+	return model.GetOneResponse(fullParcels[0]), nil
 }
 
 func (u *usecase) CreateOne(ctx context.Context, createOneInput model.CreateOneInput) error {
@@ -65,8 +75,13 @@ func (u *usecase) Histories(ctx context.Context, historyInput model.HistoryInput
 		return model.HistoryResponse{}, err
 	}
 
+	fullParcels, err := u.buildFullParcel(ctx, histories)
+	if err != nil {
+		return model.HistoryResponse{}, err
+	}
+
 	return model.HistoryResponse{
-		Histories: histories,
+		Histories: fullParcels,
 	}, nil
 }
 
@@ -100,28 +115,9 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 		return model.UpdateProgressResponse{}, err
 	}
 
-	userIDs := []string{parcel.SenderID}
-	if parcel.SenderID != parcelCol.EmptyObjectId {
-		userIDs = append(userIDs, parcel.SenderID)
-	}
-	if parcel.CourierID != parcelCol.EmptyObjectId {
-		userIDs = append(userIDs, parcel.CourierID)
-	}
-
-	users, err := (*u.userDb).GetMany(ctx, userIDs)
-	if err != nil {
-		return model.UpdateProgressResponse{}, err
-	}
-
-	userMap := map[string]userModel.User{}
-	for _, user := range users {
-		if _, ok := userMap[user.ID]; !ok {
-			userMap[user.ID] = user
-		}
-	}
-
 	updateOneInput := model.UpdateOneInput(parcel)
-	switch parcel.Status {
+	log.Debug(fmt.Sprintf("Progress %v: %v", updateOneInput.ID, updateOneInput.Status))
+	switch updateOneInput.Status {
 	case parcelCol.DRAFT_STATUS:
 		if updateProgressInput.UserID != updateOneInput.SenderID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
@@ -159,7 +155,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
 
-		if updateOneInput.DeviceID != parcelCol.EmptyObjectId {
+		if updateOneInput.DeviceID == parcelCol.EmptyObjectId {
 			return model.UpdateProgressResponse{}, errors.New("device can't be empty")
 		}
 
@@ -174,9 +170,23 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
 
+		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
+		if err != nil {
+			return model.UpdateProgressResponse{}, err
+		}
+		err = (*u.deviceMq).PubStartTravel(device.Name, parcel.End.Lat, parcel.End.Long)
+		if err != nil {
+			return model.UpdateProgressResponse{}, err
+		}
+
 		updateOneInput.Status = parcelCol.ON_GOING_STATUS
 
-		err := (*u.parcelDb).UpdateOne(ctx, updateOneInput)
+		err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
+		if err != nil {
+			return model.UpdateProgressResponse{}, err
+		}
+
+		err = (*u.deviceMq).PubStatus(device.Name)
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
@@ -185,6 +195,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
 
+		// TODO: implement email verification
 		updateOneInput.Status = parcelCol.ARRIVED_STATUS
 
 		err := (*u.parcelDb).UpdateOne(ctx, updateOneInput)
@@ -196,9 +207,23 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
 
+		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
+		if err != nil {
+			return model.UpdateProgressResponse{}, err
+		}
+		err = (*u.deviceMq).PubEndTravel(device.Name)
+		if err != nil {
+			return model.UpdateProgressResponse{}, err
+		}
+
 		updateOneInput.Status = parcelCol.DONE_STATUS
 
-		err := (*u.parcelDb).UpdateOne(ctx, updateOneInput)
+		err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
+		if err != nil {
+			return model.UpdateProgressResponse{}, err
+		}
+
+		err = (*u.deviceMq).PubStatus(device.Name)
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
@@ -206,5 +231,94 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 		return model.UpdateProgressResponse{}, errors.New(fmt.Sprintf("unknown status at id: %s", parcel.ID))
 	}
 
-	return model.UpdateProgressResponse{}, nil
+	userIDs := []string{parcel.SenderID}
+	if parcel.SenderID != parcelCol.EmptyObjectId {
+		userIDs = append(userIDs, parcel.SenderID)
+	}
+	if parcel.CourierID != parcelCol.EmptyObjectId {
+		userIDs = append(userIDs, parcel.CourierID)
+	}
+
+	users, err := (*u.userDb).GetMany(ctx, userIDs)
+	if err != nil {
+		return model.UpdateProgressResponse{}, err
+	}
+
+	userMap := map[string]userModel.User{}
+	for _, user := range users {
+		if _, ok := userMap[user.ID]; !ok {
+			userMap[user.ID] = user
+		}
+	}
+
+	res, err := u.buildFullParcel(ctx, []model.Parcel{model.Parcel(updateOneInput)})
+	if err != nil {
+		return model.UpdateProgressResponse{}, err
+	}
+
+	if len(res) <= 0 {
+		return model.UpdateProgressResponse{}, errors.New("empty parcel")
+	}
+
+	return model.UpdateProgressResponse(res[0]), nil
+}
+
+func (u *usecase) OpenDoor(ctx context.Context, openDoorInput model.OpenDoorInput) error {
+	parcel, err := (*u.parcelDb).GetOne(ctx, openDoorInput.ID)
+	if err != nil {
+		return err
+	}
+
+	userIDs := []string{parcel.SenderID}
+	if parcel.SenderID != parcelCol.EmptyObjectId {
+		userIDs = append(userIDs, parcel.SenderID)
+	}
+	if parcel.CourierID != parcelCol.EmptyObjectId {
+		userIDs = append(userIDs, parcel.CourierID)
+	}
+
+	users, err := (*u.userDb).GetMany(ctx, userIDs)
+	if err != nil {
+		return err
+	}
+
+	userMap := map[string]userModel.User{}
+	for _, user := range users {
+		if _, ok := userMap[user.ID]; !ok {
+			userMap[user.ID] = user
+		}
+	}
+
+	switch parcel.Status {
+	case parcelCol.PICK_UP_STATUS:
+		if openDoorInput.UserID != parcel.SenderID {
+			return errors.New("insufficient permission")
+		}
+
+		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
+		if err != nil {
+			return err
+		}
+		err = (*u.deviceMq).PubOpenDoor(device.Name)
+		if err != nil {
+			return err
+		}
+	case parcelCol.ARRIVED_STATUS:
+		if openDoorInput.UserID != parcel.ReceiverID {
+			return errors.New("insufficient permission")
+		}
+
+		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
+		if err != nil {
+			return err
+		}
+		err = (*u.deviceMq).PubOpenDoor(device.Name)
+		if err != nil {
+			return err
+		}
+	default:
+		return errors.New(fmt.Sprintf("invalid request: %s", parcel.ID))
+	}
+
+	return nil
 }

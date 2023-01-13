@@ -42,14 +42,14 @@ const (
 	deviceIdField    = "device_id"
 	statusField      = "status"
 
-	DRAFT_STATUS               = 0
-	WAITING_FOR_COURIER_STATUS = 1
-	PICK_UP_STATUS             = 2
-	ON_GOING_STATUS            = 3
-	ARRIVED_STATUS             = 4
-	DONE_STATUS                = 5
+	DRAFT_STATUS               = int(0)
+	WAITING_FOR_COURIER_STATUS = int(1)
+	PICK_UP_STATUS             = int(2)
+	ON_GOING_STATUS            = int(3)
+	ARRIVED_STATUS             = int(4)
+	DONE_STATUS                = int(5)
 
-	EmptyObjectId = "000000000000"
+	EmptyObjectId = "000000000000000000000000"
 )
 
 func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Parcel, error) {
@@ -89,6 +89,7 @@ func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Parcel, error) {
 		ReceiverID:  res.ReceiverID.Hex(),
 		SenderID:    res.SenderID.Hex(),
 		CourierID:   res.CourierID.Hex(),
+		DeviceID:    res.DeviceID.Hex(),
 		Status:      res.Status,
 	}, nil
 }
@@ -153,7 +154,7 @@ func (r *mongoDb) UpdateOne(ctx context.Context, updateOneInput model.UpdateOneI
 		return err
 	}
 
-	deviceID, err := primitive.ObjectIDFromHex(updateOneInput.CourierID)
+	deviceID, err := primitive.ObjectIDFromHex(updateOneInput.DeviceID)
 	if err != nil {
 		return err
 	}
@@ -168,7 +169,7 @@ func (r *mongoDb) UpdateOne(ctx context.Context, updateOneInput model.UpdateOneI
 		primitive.E{Key: receiverIdField, Value: recieverID},
 		primitive.E{Key: courierIdField, Value: courierID},
 		primitive.E{Key: deviceIdField, Value: deviceID},
-		primitive.E{Key: statusField, Value: DRAFT_STATUS},
+		primitive.E{Key: statusField, Value: updateOneInput.Status},
 	}
 
 	filter := bson.D{primitive.E{Key: idField, Value: docID}}

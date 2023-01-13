@@ -1,5 +1,10 @@
 package model
 
+type AuthTokens struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type MeInput struct {
 	ID string `json:"id"`
 }
@@ -24,26 +29,15 @@ type User struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
-	Password string `json:"password"`
+	Password string `json:"-"`
 	Role     int    `json:"role"`
 }
 
-type MeResponse struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Role  int    `json:"role"`
-}
+type MeResponse = User
 
-type RegisterResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
+type RegisterResponse = AuthTokens
 
-type LoginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
+type LoginResponse = AuthTokens
 
 type RefreshResponse struct {
 	AccessToken string `json:"access_token"`

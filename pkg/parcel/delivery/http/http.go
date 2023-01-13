@@ -192,3 +192,91 @@ func (d *delivery) GetPhotoSignedUrl(w h.ResponseWriter, r *h.Request) {
 		json.NewEncoder(w).Encode(res)
 	}
 }
+
+func (d *delivery) UpdateProgress(w h.ResponseWriter, r *h.Request) {
+	var payload model.UpdateProgressInput
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		log.Error("Error: Invalid Payload")
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("userID")
+	if reflect.TypeOf(userID).String() != "string" {
+		log.Error("Error: Invalid UserID")
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	payload.UserID = fmt.Sprintf("%v", userID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	var res model.UpdateProgressResponse
+	ch := make(chan int)
+	go func() {
+		res, err = d.usecase.UpdateProgress(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Update progress device timeout")
+		h.Error(w, "timeout", h.StatusInternalServerError)
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(fmt.Sprintf("Update progress failed, Error: %v", err))
+			h.Error(w, err.Error(), h.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(h.StatusOK)
+		json.NewEncoder(w).Encode(res)
+	}
+}
+
+func (d *delivery) OpenDoor(w h.ResponseWriter, r *h.Request) {
+	var payload model.OpenDoorInput
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		log.Error("Error: Invalid Payload")
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("userID")
+	if reflect.TypeOf(userID).String() != "string" {
+		log.Error("Error: Invalid UserID")
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	payload.UserID = fmt.Sprintf("%v", userID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	ch := make(chan int)
+	go func() {
+		err = d.usecase.OpenDoor(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Open Door timeout")
+		h.Error(w, "timeout", h.StatusInternalServerError)
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(fmt.Sprintf("Open Door failed, Error: %v", err))
+			h.Error(w, err.Error(), h.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(h.StatusNoContent)
+	}
+}
