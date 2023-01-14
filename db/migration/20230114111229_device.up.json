@@ -5,7 +5,7 @@
       "$jsonSchema": {
         "bsonType": "object",
         "title": "Device Object Validation",
-        "required": ["name", "status"],
+        "required": ["name", "status", "log_interval"],
         "properties": {
           "name": {
             "bsonType": "string",
@@ -16,6 +16,10 @@
             "bsonType": "int",
             "enum": [0, 1],
             "description": "'status' must be a int and is required"
+          },
+          "log_interval": {
+            "bsonType": "int",
+            "description": "'log_interval' must be a int and is required"
           }
         }
       }

@@ -18,13 +18,13 @@ type Coordinate struct {
 }
 
 type ParcelTravel struct {
-	ID           primitive.ObjectID  `bson:"_id"`
-	ParcelID     primitive.ObjectID  `bson:"parcel_id"`
-	Coordinate   Coordinate          `bson:"coordinate"`
-	IsDoorOpen   bool                `bson:"is_door_open"`
-	Signal       int                 `bson:"signal"`
-	GPSTimestamp primitive.Timestamp `bson:"gps_timestamp"`
-	Timestamp    primitive.Timestamp `bson:"timestamp"`
+	ID           primitive.ObjectID `bson:"_id"`
+	ParcelID     primitive.ObjectID `bson:"parcel_id"`
+	Coordinate   Coordinate         `bson:"coordinate"`
+	IsDoorOpen   bool               `bson:"is_door_open"`
+	Signal       int                `bson:"signal"`
+	GPSTimestamp primitive.DateTime `bson:"gps_timestamp"`
+	Timestamp    primitive.DateTime `bson:"timestamp"`
 }
 
 const (
@@ -45,6 +45,7 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		return err
 	}
 
+	timestamp := time.Now()
 	gpsTimestamp, err := time.Parse(gpsTimeFormat, createOneInput.GPSTimestamp)
 	if err != nil {
 		return err
@@ -55,8 +56,8 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		primitive.E{Key: coordinateField, Value: Coordinate(createOneInput.Coordinate)},
 		primitive.E{Key: isDoorOpenField, Value: createOneInput.IsDoorOpen},
 		primitive.E{Key: signalField, Value: createOneInput.Signal},
-		primitive.E{Key: gpsTimestampField, Value: primitive.Timestamp{T: uint32(gpsTimestamp.Unix()), I: 0}},
-		primitive.E{Key: timestampField, Value: primitive.Timestamp{T: uint32(time.Now().Unix()), I: 0}},
+		primitive.E{Key: gpsTimestampField, Value: primitive.NewDateTimeFromTime(gpsTimestamp.UTC())},
+		primitive.E{Key: timestampField, Value: primitive.NewDateTimeFromTime(timestamp.UTC())},
 	}
 
 	res, err := r.DbCollection.InsertOne(ctx, doc)
@@ -99,8 +100,8 @@ func (r *mongoDb) GetAll(ctx context.Context, getAllInput model.GetAllInput) ([]
 			Coordinate:   model.Coordinate(elem.Coordinate),
 			IsDoorOpen:   elem.IsDoorOpen,
 			Signal:       elem.Signal,
-			GPSTimestamp: time.Unix(int64(elem.GPSTimestamp.T), 0),
-			Timestamp:    time.Unix(int64(elem.Timestamp.T), 0),
+			GPSTimestamp: elem.GPSTimestamp.Time(),
+			Timestamp:    elem.Timestamp.Time(),
 		})
 	}
 

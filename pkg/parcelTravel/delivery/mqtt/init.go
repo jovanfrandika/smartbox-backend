@@ -9,10 +9,14 @@ type delivery struct {
 	usecase u.Usecase
 }
 
+const (
+	SMARTBOX_DATA_TOPIC = "smartbox/data"
+)
+
 func Deliver(mqttClient *m.Client, usecase u.Usecase) {
 	d := &delivery{
 		usecase: usecase,
 	}
 
-	(*mqttClient).AddRoute("smartbox/data", d.ConsumeTravelLog)
+	(*mqttClient).Subscribe(SMARTBOX_DATA_TOPIC, 1, d.ConsumeTravelLog)
 }

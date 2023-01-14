@@ -14,13 +14,17 @@ func (u *usecase) ConsumeTravelLog(ctx context.Context, consumeTravelLogMessage 
 		return err
 	}
 
-	parcel, err := (*u.parcelDb).GetOneByDevice(ctx, parcelModel.GetOneByDeviceInput{Device: device.ID})
+	parcel, err := (*u.parcelDb).GetOneByDeviceAndStatus(ctx, parcelModel.GetOneByDeviceAndStatusInput{Device: device.ID, Status: parcelModel.ON_GOING_STATUS})
+	if err != nil {
+		return err
+	}
 
 	err = (*u.parcelTravelDb).CreateOne(ctx, model.CreateOneInput{
-		ParcelID:   parcel.ID,
-		Coordinate: consumeTravelLogMessage.Coordinate,
-		Signal:     consumeTravelLogMessage.Signal,
-		IsDoorOpen: consumeTravelLogMessage.IsDoorOpen,
+		ParcelID:     parcel.ID,
+		Coordinate:   consumeTravelLogMessage.Coordinate,
+		Signal:       consumeTravelLogMessage.Signal,
+		IsDoorOpen:   consumeTravelLogMessage.IsDoorOpen,
+		GPSTimestamp: consumeTravelLogMessage.GPSTimestamp,
 	})
 	if err != nil {
 		return err

@@ -87,9 +87,20 @@ func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Parcel, error) {
 	}, nil
 }
 
-func (r *mongoDb) GetOneByDevice(ctx context.Context, getOneByDeviceInput model.GetOneByDeviceInput) (model.Parcel, error) {
+func (r *mongoDb) GetOneByDeviceAndStatus(ctx context.Context, getOneByDeviceAndStatusInput model.GetOneByDeviceAndStatusInput) (model.Parcel, error) {
+	deviceID, err := primitive.ObjectIDFromHex(getOneByDeviceAndStatusInput.Device)
+	if err != nil {
+		return model.Parcel{}, err
+	}
+
+	filter := bson.M{
+		"$and": bson.A{
+			bson.M{deviceIdField: deviceID},
+			bson.M{statusField: getOneByDeviceAndStatusInput.Status},
+		},
+	}
 	var res Parcel
-	err := r.DbCollection.FindOne(ctx, bson.M{nameField: getOneByDeviceInput.Device}).Decode(&res)
+	err = r.DbCollection.FindOne(ctx, filter).Decode(&res)
 	if err != nil {
 		return model.Parcel{}, err
 	}

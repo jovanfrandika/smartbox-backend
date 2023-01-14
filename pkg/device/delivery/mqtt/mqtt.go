@@ -40,8 +40,10 @@ func (d *delivery) ConsumeUpdateStatusLog(_ m.Client, msg m.Message) {
 	case <-ch:
 		if err != nil {
 			log.Error(err.Error(), 0)
+			msg.Ack()
+			return
 		}
-		log.Info("Create one parcel travel success", 0)
+		log.Info("Update device status success", 0)
 		msg.Ack()
 	}
 }

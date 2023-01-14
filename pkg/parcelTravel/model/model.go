@@ -36,9 +36,9 @@ type GetAllResponse struct {
 }
 
 type ConsumeTravelLogMessage struct {
-	DeviceName string     `json:"device_name"`
-	Coordinate Coordinate `json:"coordinate"`
-	IsDoorOpen bool       `json:"is_door_open"`
-	Signal     int        `json:"signal"`
-	Timestamp  string     `json:"timestamp"`
+	DeviceName   string     `json:"device_name"`
+	Coordinate   Coordinate `json:"coordinate"`
+	IsDoorOpen   bool       `json:"is_door_open"`
+	Signal       int        `json:"signal"`
+	GPSTimestamp string     `json:"gps_timestamp"`
 }
