@@ -19,6 +19,8 @@ import (
 	friendshipService "github.com/jovanfrandika/smartbox-backend/pkg/friendship/service"
 	rParcelMongo "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
 	parcelService "github.com/jovanfrandika/smartbox-backend/pkg/parcel/service"
+	rParcelTravelMongo "github.com/jovanfrandika/smartbox-backend/pkg/parcelTravel/repository/mongo"
+	parcelTravelService "github.com/jovanfrandika/smartbox-backend/pkg/parcelTravel/service"
 	rUserMongo "github.com/jovanfrandika/smartbox-backend/pkg/user/repository/mongo"
 	userService "github.com/jovanfrandika/smartbox-backend/pkg/user/service"
 	log "github.com/sirupsen/logrus"
@@ -57,6 +59,7 @@ func main() {
 	userDb := rUserMongo.New(db)
 	friendshipDb := rFriendshipMongo.New(db)
 	parcelDb := rParcelMongo.New(db)
+	parcelTravelDb := rParcelTravelMongo.New(db)
 	deviceDb := rDeviceMongo.New(db)
 
 	mqttClient := cMqtt.Init("stancyzk", *config.Cfg)
@@ -81,6 +84,9 @@ func main() {
 		StorageClient: storageClient,
 	})
 
+	parcelTravelRouter := chi.NewRouter()
+	parcelTravelService.Init(&parcelTravelDb, &parcelDb, &deviceDb, parcelRouter, config.Cfg)
+
 	friendshipRouter := chi.NewRouter()
 	friendshipService.Init(&friendshipDb, &userDb, friendshipRouter, config.Cfg)
 
@@ -92,6 +98,7 @@ func main() {
 	r.Mount("/friendship", friendshipRouter)
 	r.Mount("/device", deviceRouter)
 	r.Mount("/parcel", parcelRouter)
+	r.Mount("/parcel_travel", parcelTravelRouter)
 
 	http.ListenAndServe(":8000", r)
 

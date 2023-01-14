@@ -56,7 +56,7 @@ func (u *usecase) DeleteOne(ctx context.Context, deleteOneInput model.DeleteOneI
 		return err
 	}
 
-	if res.Status != parcelCol.DRAFT_STATUS {
+	if res.Status != model.DRAFT_STATUS {
 		return errors.New("Cannot delete non draft parcel")
 	}
 
@@ -118,7 +118,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 	updateOneInput := model.UpdateOneInput(parcel)
 	log.Debug(fmt.Sprintf("Progress %v: %v", updateOneInput.ID, updateOneInput.Status))
 	switch updateOneInput.Status {
-	case parcelCol.DRAFT_STATUS:
+	case model.DRAFT_STATUS:
 		if updateProgressInput.UserID != updateOneInput.SenderID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
@@ -144,13 +144,13 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("recipient can't be empty")
 		}
 
-		updateOneInput.Status = parcelCol.WAITING_FOR_COURIER_STATUS
+		updateOneInput.Status = model.WAITING_FOR_COURIER_STATUS
 
 		err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
-	case parcelCol.WAITING_FOR_COURIER_STATUS:
+	case model.WAITING_FOR_COURIER_STATUS:
 		if updateProgressInput.UserID != updateOneInput.CourierID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
@@ -159,13 +159,13 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("device can't be empty")
 		}
 
-		updateOneInput.Status = parcelCol.PICK_UP_STATUS
+		updateOneInput.Status = model.PICK_UP_STATUS
 
 		err := (*u.parcelDb).UpdateOne(ctx, updateOneInput)
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
-	case parcelCol.PICK_UP_STATUS:
+	case model.PICK_UP_STATUS:
 		if updateProgressInput.UserID != updateOneInput.SenderID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
@@ -179,7 +179,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, err
 		}
 
-		updateOneInput.Status = parcelCol.ON_GOING_STATUS
+		updateOneInput.Status = model.ON_GOING_STATUS
 
 		err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
 		if err != nil {
@@ -190,19 +190,19 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
-	case parcelCol.ON_GOING_STATUS:
+	case model.ON_GOING_STATUS:
 		if updateProgressInput.UserID != updateOneInput.CourierID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
 
 		// TODO: implement email verification
-		updateOneInput.Status = parcelCol.ARRIVED_STATUS
+		updateOneInput.Status = model.ARRIVED_STATUS
 
 		err := (*u.parcelDb).UpdateOne(ctx, updateOneInput)
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
-	case parcelCol.ARRIVED_STATUS:
+	case model.ARRIVED_STATUS:
 		if updateProgressInput.UserID != updateOneInput.ReceiverID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
@@ -216,7 +216,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, err
 		}
 
-		updateOneInput.Status = parcelCol.DONE_STATUS
+		updateOneInput.Status = model.DONE_STATUS
 
 		err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
 		if err != nil {
@@ -290,34 +290,25 @@ func (u *usecase) OpenDoor(ctx context.Context, openDoorInput model.OpenDoorInpu
 	}
 
 	switch parcel.Status {
-	case parcelCol.PICK_UP_STATUS:
+	case model.PICK_UP_STATUS:
 		if openDoorInput.UserID != parcel.SenderID {
 			return errors.New("insufficient permission")
 		}
-
-		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
-		if err != nil {
-			return err
-		}
-		err = (*u.deviceMq).PubOpenDoor(device.Name)
-		if err != nil {
-			return err
-		}
-	case parcelCol.ARRIVED_STATUS:
+	case model.ARRIVED_STATUS:
 		if openDoorInput.UserID != parcel.ReceiverID {
 			return errors.New("insufficient permission")
 		}
-
-		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
-		if err != nil {
-			return err
-		}
-		err = (*u.deviceMq).PubOpenDoor(device.Name)
-		if err != nil {
-			return err
-		}
 	default:
 		return errors.New(fmt.Sprintf("invalid request: %s", parcel.ID))
+	}
+
+	device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
+	if err != nil {
+		return err
+	}
+	err = (*u.deviceMq).PubOpenDoor(device.Name)
+	if err != nil {
+		return err
 	}
 
 	return nil

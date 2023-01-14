@@ -14,6 +14,7 @@ type usecase struct {
 }
 
 type Usecase interface {
+	ConsumeUpdateStatus(ctx context.Context, consumeUpdateStatusInput model.ConsumeUpdateStatusMessage) error
 	CreateOne(ctx context.Context, createOneInput model.CreateOneInput) error
 	GetAll(ctx context.Context) (model.GetAllResponse, error)
 }

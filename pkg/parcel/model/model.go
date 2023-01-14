@@ -5,6 +5,15 @@ import (
 	userModel "github.com/jovanfrandika/smartbox-backend/pkg/user/model"
 )
 
+const (
+	DRAFT_STATUS               = int(0)
+	WAITING_FOR_COURIER_STATUS = int(1)
+	PICK_UP_STATUS             = int(2)
+	ON_GOING_STATUS            = int(3)
+	ARRIVED_STATUS             = int(4)
+	DONE_STATUS                = int(5)
+)
+
 type Coordinate struct {
 	Lat  float32 `json:"lat"`
 	Long float32 `json:"long"`
@@ -50,6 +59,10 @@ type UpdateOneInput = Parcel
 
 type GetOneInput struct {
 	ID string `json:"id"`
+}
+
+type GetOneByDeviceInput struct {
+	Device string `json:"device"`
 }
 
 type GetPhotoSignedUrlInput struct {

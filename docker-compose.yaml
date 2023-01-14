@@ -28,18 +28,18 @@ services:
     depends_on:
       - db
 
-  # consumer:
-  #   build: 
-  #     context: .
-  #     dockerfile: ./docker/consumer/Dockerfile
-  #   container_name: consumer 
-  #   env_file:
-  #     - .env
-  #   restart: unless-stopped
-  #   networks:
-  #     - smartbox
-  #   depends_on:
-  #     - db
+  consumer:
+    build: 
+      context: .
+      dockerfile: ./docker/consumer/Dockerfile
+    container_name: consumer 
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - smartbox
+    depends_on:
+      - db
 
   migrate: &basemigrate
     profiles: ["tools"]

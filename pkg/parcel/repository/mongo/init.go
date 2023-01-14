@@ -13,6 +13,7 @@ type mongoDb struct {
 
 type MongoDb interface {
 	GetOne(ctx context.Context, id string) (model.Parcel, error)
+	GetOneByDevice(ctx context.Context, getOneByDeviceInput model.GetOneByDeviceInput) (model.Parcel, error)
 	CreateOne(ctx context.Context, createOneInput model.CreateOneInput) (string, error)
 	UpdateOne(ctx context.Context, updateOneInput model.UpdateOneInput) error
 	DeleteOne(ctx context.Context, deleteOneInput model.DeleteOneInput) error

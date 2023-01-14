@@ -81,6 +81,20 @@ func (r *mongoDb) GetOne(ctx context.Context, getOneInput model.GetOneInput) (mo
 	}, nil
 }
 
+func (r *mongoDb) GetOneByName(ctx context.Context, getOneByNameInput model.GetOneByNameInput) (model.Device, error) {
+	var res Device
+	err := r.DbCollection.FindOne(ctx, bson.M{nameField: getOneByNameInput.Name}).Decode(&res)
+	if err != nil {
+		return model.Device{}, err
+	}
+
+	return model.Device{
+		ID:     res.ID.Hex(),
+		Name:   res.Name,
+		Status: res.Status,
+	}, nil
+}
+
 func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneInput) (string, error) {
 	doc := bson.D{
 		primitive.E{Key: nameField, Value: createOneInput.Name},
@@ -100,14 +114,9 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 }
 
 func (r *mongoDb) UpdateStatus(ctx context.Context, updateStatusInput model.UpdateStatusInput) error {
-	docID, err := primitive.ObjectIDFromHex(updateStatusInput.ID)
-	if err != nil {
-		return err
-	}
-
-	filter := bson.D{primitive.E{Key: idField, Value: docID}}
+	filter := bson.D{primitive.E{Key: nameField, Value: updateStatusInput.Name}}
 	update := bson.D{
-		primitive.E{Key: statusField, Value: IDLE_STATUS},
+		primitive.E{Key: statusField, Value: updateStatusInput.Status},
 	}
 
 	res := r.DbCollection.FindOneAndUpdate(ctx, filter, bson.D{{"$set", update}})

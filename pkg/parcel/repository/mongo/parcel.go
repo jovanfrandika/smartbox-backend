@@ -42,13 +42,6 @@ const (
 	deviceIdField    = "device_id"
 	statusField      = "status"
 
-	DRAFT_STATUS               = int(0)
-	WAITING_FOR_COURIER_STATUS = int(1)
-	PICK_UP_STATUS             = int(2)
-	ON_GOING_STATUS            = int(3)
-	ARRIVED_STATUS             = int(4)
-	DONE_STATUS                = int(5)
-
 	EmptyObjectId = "000000000000000000000000"
 )
 
@@ -60,6 +53,43 @@ func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Parcel, error) {
 
 	var res Parcel
 	err = r.DbCollection.FindOne(ctx, bson.M{idField: docID}).Decode(&res)
+	if err != nil {
+		return model.Parcel{}, err
+	}
+
+	var start *model.Coordinate
+	if res.Start != nil {
+		start = &model.Coordinate{
+			Lat:  res.Start.Lat,
+			Long: res.Start.Long,
+		}
+	}
+	var end *model.Coordinate
+	if res.End != nil {
+		end = &model.Coordinate{
+			Lat:  res.End.Lat,
+			Long: res.End.Long,
+		}
+	}
+
+	return model.Parcel{
+		ID:          res.ID.Hex(),
+		Name:        res.Name,
+		Description: res.Description,
+		PhotoUri:    res.PhotoUri,
+		Start:       start,
+		End:         end,
+		ReceiverID:  res.ReceiverID.Hex(),
+		SenderID:    res.SenderID.Hex(),
+		CourierID:   res.CourierID.Hex(),
+		DeviceID:    res.DeviceID.Hex(),
+		Status:      res.Status,
+	}, nil
+}
+
+func (r *mongoDb) GetOneByDevice(ctx context.Context, getOneByDeviceInput model.GetOneByDeviceInput) (model.Parcel, error) {
+	var res Parcel
+	err := r.DbCollection.FindOne(ctx, bson.M{nameField: getOneByDeviceInput.Device}).Decode(&res)
 	if err != nil {
 		return model.Parcel{}, err
 	}
@@ -118,7 +148,7 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		primitive.E{Key: senderIdField, Value: senderID},
 		primitive.E{Key: courierIdField, Value: emptyID},
 		primitive.E{Key: deviceIdField, Value: emptyID},
-		primitive.E{Key: statusField, Value: DRAFT_STATUS},
+		primitive.E{Key: statusField, Value: model.DRAFT_STATUS},
 	}
 
 	res, err := r.DbCollection.InsertOne(ctx, doc)
