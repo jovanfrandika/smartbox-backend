@@ -1,0 +1,116 @@
+[
+  {
+    "create": "parcel",
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "title": "Parcel Object Validation",
+        "required": [
+          "name",
+          "description",
+          "photo_uri",
+          "start",
+          "end",
+          "receiver_id",
+          "sender_id",
+          "courier_id",
+          "device_id",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "bsonType": "string",
+            "description": "'name' must be a string and is required"
+          },
+          "description": {
+            "bsonType": "string",
+            "description": "'description' must be a string and is required"
+          },
+          "photo_uri": {
+            "bsonType": "string",
+            "minLength": 53,
+            "description": "'photo_uri' must be a string with min 53 length and is required"
+          },
+          "start": {
+            "bsonType": ["object", "null"],
+            "description": "'start' must be an object or null and is required",
+            "properties": {
+              "lat": {
+                "bsonType": "double",
+                "description": "'lat' must be a double"
+              },
+              "long": {
+                "bsonType": "double",
+                "description": "'long' must be a double"
+              }
+            }
+          },
+          "end": {
+            "bsonType": ["object", "null"],
+            "description": "'end' must be an object or null and is required",
+            "properties": {
+              "lat": {
+                "bsonType": "double",
+                "description": "'lat' must be a double"
+              },
+              "long": {
+                "bsonType": "double",
+                "description": "'long' must be a double"
+              }
+            }
+          },
+          "receiver_id": {
+            "bsonType": "objectId",
+            "description": "'receiver_id' must be a objectId and is required"
+          },
+          "sender_id": {
+            "bsonType": "objectId",
+            "description": "'sender_id' must be a objectId and is required"
+          },
+          "courier_id": {
+            "bsonType": "objectId",
+            "description": "'courier_id' must be a objectId and is required"
+          },
+          "device_id": {
+            "bsonType": "objectId",
+            "description": "'device_id' must be a objectId and is required"
+          },
+          "status": {
+            "bsonType": "int",
+            "enum": [0, 1, 2, 3, 4, 5],
+            "description": "'status' must be a int and is required"
+          }
+        }
+      }
+   }
+  },
+  {
+    "createIndexes": "parcel",
+    "indexes": [
+      {
+        "key": {
+          "receiver_id": 1
+        },
+        "name": "receiver_id"
+      },
+      {
+        "key": {
+          "sender_id": 1
+        },
+        "name": "sender_id"
+      },
+      {
+        "key": {
+          "courier_id": 1
+        },
+        "name": "courier_id"
+      },
+      {
+        "key": {
+          "device_id": 1
+        },
+        "name": "device_id"
+      }
+    ]
+  }
+]

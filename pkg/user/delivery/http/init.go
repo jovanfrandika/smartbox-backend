@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/jovanfrandika/smartbox-backend/pkg/common/utils"
+	"github.com/jovanfrandika/smartbox-backend/pkg/common/jwt"
 	u "github.com/jovanfrandika/smartbox-backend/pkg/user/usecase"
 )
 
@@ -15,7 +15,7 @@ func Deliver(r *chi.Mux, usecase u.Usecase) {
 		usecase: usecase,
 	}
 
-	(*r).With(utils.AuthMiddleware).Get("/me", d.Me)
+	(*r).With(jwt.AuthMiddleware).Get("/me", d.Me)
 	(*r).Post("/login", d.Login)
 	(*r).Post("/register", d.Register)
 	(*r).Post("/refresh", d.RefreshAccessToken)

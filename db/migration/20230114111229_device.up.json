@@ -1,0 +1,36 @@
+[
+  {
+    "create": "device",
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "title": "Device Object Validation",
+        "required": ["name", "status"],
+        "properties": {
+          "name": {
+            "bsonType": "string",
+            "minLength": 8,
+            "description": "'name' must be a string with min 8 length and is required"
+          },
+          "status": {
+            "bsonType": "int",
+            "enum": [0, 1],
+            "description": "'status' must be a int and is required"
+          }
+        }
+      }
+   }
+  },
+  {
+    "createIndexes": "device",
+    "indexes": [
+      {
+        "key": {
+          "name": 1
+        },
+        "name": "name",
+        "unique": true
+      }
+    ]
+  }
+]

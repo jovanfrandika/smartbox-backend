@@ -8,8 +8,10 @@ import (
 	"reflect"
 	"time"
 
+	log "github.com/jovanfrandika/smartbox-backend/pkg/common/logger"
+	commonModel "github.com/jovanfrandika/smartbox-backend/pkg/common/model"
+
 	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,7 +23,7 @@ func (d *delivery) CreateOne(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -37,13 +39,21 @@ func (d *delivery) CreateOne(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Create one device timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.INTERVAL_SERVER_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.WriteHeader(h.StatusCreated)
@@ -55,7 +65,7 @@ func (d *delivery) UpdateOne(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -71,13 +81,21 @@ func (d *delivery) UpdateOne(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Update one device timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.INTERVAL_SERVER_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.WriteHeader(h.StatusNoContent)
@@ -89,7 +107,7 @@ func (d *delivery) DeleteOne(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -105,13 +123,21 @@ func (d *delivery) DeleteOne(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Delete one device timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.INTERVAL_SERVER_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.WriteHeader(h.StatusNoContent)
@@ -122,7 +148,7 @@ func (d *delivery) Histories(w h.ResponseWriter, r *h.Request) {
 	var payload model.HistoryInput
 	userID := r.Context().Value("userID")
 	if reflect.TypeOf(userID).String() != "string" {
-		log.Error("Error: Invalid UserID")
+		log.Error("Invalid UserID", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -142,13 +168,21 @@ func (d *delivery) Histories(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Histories timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Login failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -162,7 +196,7 @@ func (d *delivery) GetPhotoSignedUrl(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -179,13 +213,21 @@ func (d *delivery) GetPhotoSignedUrl(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Delete one device timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.WriteHeader(h.StatusOK)
@@ -198,14 +240,14 @@ func (d *delivery) UpdateProgress(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
 
 	userID := r.Context().Value("userID")
 	if reflect.TypeOf(userID).String() != "string" {
-		log.Error("Error: Invalid UserID")
+		log.Error("Invalid UserID", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -224,13 +266,21 @@ func (d *delivery) UpdateProgress(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Update progress device timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Update progress failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.WriteHeader(h.StatusOK)
@@ -243,14 +293,14 @@ func (d *delivery) OpenDoor(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
 
 	userID := r.Context().Value("userID")
 	if reflect.TypeOf(userID).String() != "string" {
-		log.Error("Error: Invalid UserID")
+		log.Error("Invalid UserID", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -268,13 +318,21 @@ func (d *delivery) OpenDoor(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Open Door timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Open Door failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.WriteHeader(h.StatusNoContent)

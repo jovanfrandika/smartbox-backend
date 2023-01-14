@@ -2,12 +2,10 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/jovanfrandika/smartbox-backend/pkg/common/utils"
+	utils "github.com/jovanfrandika/smartbox-backend/pkg/common/jwt"
 	"github.com/jovanfrandika/smartbox-backend/pkg/user/model"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -32,19 +30,16 @@ func (u *usecase) Me(ctx context.Context, meInput model.MeInput) (model.MeRespon
 func (u *usecase) Register(ctx context.Context, registerInput model.RegisterInput) (model.RegisterResponse, error) {
 	userID, err := (*u.db).CreateUser(ctx, registerInput)
 	if err != nil {
-		log.Error(fmt.Sprintf("Error: %s", err.Error()))
 		return model.RegisterResponse{}, err
 	}
 
 	accessToken, err := utils.CreateToken(ACCESS_TOKEN_EXPIRES_IN, userID, u.config.JWTAccessSecretKey)
 	if err != nil {
-		log.Error(fmt.Sprintf("Error: %s", err.Error()))
 		return model.RegisterResponse{}, err
 	}
 
 	refreshToken, err := utils.CreateToken(REFRESH_TOKEN_EXPIRES_IN, userID, u.config.JWTRefreshSecretKey)
 	if err != nil {
-		log.Error(fmt.Sprintf("Error: %s", err.Error()))
 		return model.RegisterResponse{}, err
 	}
 
@@ -57,19 +52,16 @@ func (u *usecase) Register(ctx context.Context, registerInput model.RegisterInpu
 func (u *usecase) Login(ctx context.Context, loginInput model.LoginInput) (model.LoginResponse, error) {
 	user, err := (*u.db).Login(ctx, loginInput)
 	if err != nil {
-		log.Error(fmt.Sprintf("Database Error: %s", err.Error()))
 		return model.LoginResponse{}, err
 	}
 
 	accessToken, err := utils.CreateToken(ACCESS_TOKEN_EXPIRES_IN, user.ID, u.config.JWTAccessSecretKey)
 	if err != nil {
-		log.Error(fmt.Sprintf("Access Token Error: %s", err.Error()))
 		return model.LoginResponse{}, err
 	}
 
 	refreshToken, err := utils.CreateToken(REFRESH_TOKEN_EXPIRES_IN, user.ID, u.config.JWTRefreshSecretKey)
 	if err != nil {
-		log.Error(fmt.Sprintf("Refresh Error: %s", err.Error()))
 		return model.LoginResponse{}, err
 	}
 

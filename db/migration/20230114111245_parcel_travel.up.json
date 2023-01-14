@@ -1,0 +1,9 @@
+[
+  {
+    "create": "parcel_travel",
+    "timeseries": {
+      "timeField": "timestamp",
+      "metaField": "parcel_id"
+    }
+  }
+]

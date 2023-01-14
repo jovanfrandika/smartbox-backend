@@ -3,12 +3,13 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	h "net/http"
 	"time"
 
+	log "github.com/jovanfrandika/smartbox-backend/pkg/common/logger"
+	commonModel "github.com/jovanfrandika/smartbox-backend/pkg/common/model"
+
 	"github.com/jovanfrandika/smartbox-backend/pkg/parcelTravel/model"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,7 +21,7 @@ func (d *delivery) GetAll(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -37,13 +38,21 @@ func (d *delivery) GetAll(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Get all timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Get all failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")

@@ -3,12 +3,12 @@ package mqtt
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
+
+	log "github.com/jovanfrandika/smartbox-backend/pkg/common/logger"
 
 	m "github.com/eclipse/paho.mqtt.golang"
 	"github.com/jovanfrandika/smartbox-backend/pkg/device/model"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -17,9 +17,9 @@ const (
 
 func (d *delivery) ConsumeUpdateStatusLog(_ m.Client, msg m.Message) {
 	var payload model.ConsumeUpdateStatusMessage
-	err := json.Unmarshal([]byte(msg.Payload()), &payload)
+	err := json.Unmarshal(msg.Payload(), &payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		msg.Ack()
 		return
 	}
@@ -35,13 +35,13 @@ func (d *delivery) ConsumeUpdateStatusLog(_ m.Client, msg m.Message) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Create one parcel travel timeout")
+		log.Error("Timeout", 0)
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Create one parcel travel failed, Error: %v", err))
+			log.Error(err.Error(), 0)
 		}
-		log.Info("Create one parcel travel success")
+		log.Info("Create one parcel travel success", 0)
 		msg.Ack()
 	}
 }

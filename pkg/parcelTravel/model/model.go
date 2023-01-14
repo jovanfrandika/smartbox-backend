@@ -10,20 +10,21 @@ type Coordinate struct {
 }
 
 type ParcelTravel struct {
-	ID         string     `json:"id"`
-	ParcelID   string     `json:"parcel_id"`
-	Coordinate Coordinate `json:"coordinate"`
-	IsDoorOpen bool       `json:"is_door_open"`
-	Signal     int        `json:"signal"`
-	Timestamp  time.Time  `json:"timestamp"`
+	ID           string     `json:"id"`
+	ParcelID     string     `json:"parcel_id"`
+	Coordinate   Coordinate `json:"coordinate"`
+	IsDoorOpen   bool       `json:"is_door_open"`
+	Signal       int        `json:"signal"`
+	GPSTimestamp time.Time  `json:"gps_timestamp"`
+	Timestamp    time.Time  `json:"timestamp"`
 }
 
 type CreateOneInput struct {
-	ParcelID   string     `json:"parcel_id"`
-	Coordinate Coordinate `json:"coordinate"`
-	IsDoorOpen bool       `json:"is_door_open"`
-	Signal     int        `json:"signal"`
-	Timestamp  string     `json:"timestamp"`
+	ParcelID     string     `json:"parcel_id"`
+	Coordinate   Coordinate `json:"coordinate"`
+	IsDoorOpen   bool       `json:"is_door_open"`
+	Signal       int        `json:"signal"`
+	GPSTimestamp string     `json:"gps_timestamp"`
 }
 
 type GetAllInput struct {

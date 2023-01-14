@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	log "github.com/jovanfrandika/smartbox-backend/pkg/common/logger"
+
 	"cloud.google.com/go/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jovanfrandika/smartbox-backend/pkg/common/config"
@@ -23,36 +25,33 @@ import (
 	parcelTravelService "github.com/jovanfrandika/smartbox-backend/pkg/parcelTravel/service"
 	rUserMongo "github.com/jovanfrandika/smartbox-backend/pkg/user/repository/mongo"
 	userService "github.com/jovanfrandika/smartbox-backend/pkg/user/service"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/api/option"
 )
 
 func main() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
+	log.Init()
 
 	config.Init()
 
 	client, err := mongo.NewClient(options.Client().ApplyURI(config.Cfg.MongoDBUri))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err.Error(), 0)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err.Error(), 0)
 	}
 
 	db := client.Database(config.Cfg.DBName)
 
 	storageClient, err := storage.NewClient(context.TODO(), option.WithCredentialsFile("files/service-account.json"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err.Error(), 0)
 	}
 	defer storageClient.Close()
 
@@ -85,7 +84,7 @@ func main() {
 	})
 
 	parcelTravelRouter := chi.NewRouter()
-	parcelTravelService.Init(&parcelTravelDb, &parcelDb, &deviceDb, parcelRouter, config.Cfg)
+	parcelTravelService.Init(&parcelTravelDb, &parcelDb, &deviceDb, parcelTravelRouter, config.Cfg)
 
 	friendshipRouter := chi.NewRouter()
 	friendshipService.Init(&friendshipDb, &userDb, friendshipRouter, config.Cfg)

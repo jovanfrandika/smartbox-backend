@@ -1,0 +1,45 @@
+[
+  {
+    "create": "user",
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "title": "User Object Validation",
+        "required": ["name", "email", "password", "role"],
+        "properties": {
+          "name": {
+            "bsonType": "string",
+            "minLength": 3,
+            "description": "'name' must be a string and is required"
+          },
+          "email": {
+            "bsonType": "string",
+            "minLength": 6,
+            "pattern": "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+            "description": "'email' must be a string and is required"
+          },
+          "password": {
+            "bsonType": "string",
+            "description": "'password' must be a string and is required"
+          },
+          "role": {
+            "bsonType": "int",
+            "description": "'role' must be a int and is required"
+          }
+        }
+      }
+   }
+  },
+  {
+    "createIndexes": "user",
+    "indexes": [
+      {
+        "key": {
+          "email": 1
+        },
+        "name": "Unique email",
+        "unique": true
+      }
+    ]
+  }
+]

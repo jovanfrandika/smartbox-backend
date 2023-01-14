@@ -18,25 +18,34 @@ type Coordinate struct {
 }
 
 type ParcelTravel struct {
-	ID         primitive.ObjectID  `bson:"_id"`
-	ParcelID   primitive.ObjectID  `bson:"parcel_id"`
-	Coordinate Coordinate          `bson:"coordinate"`
-	IsDoorOpen bool                `bson:"is_door_open"`
-	Signal     int                 `bson:"signal"`
-	Timestamp  primitive.Timestamp `bson:"timestamp"`
+	ID           primitive.ObjectID  `bson:"_id"`
+	ParcelID     primitive.ObjectID  `bson:"parcel_id"`
+	Coordinate   Coordinate          `bson:"coordinate"`
+	IsDoorOpen   bool                `bson:"is_door_open"`
+	Signal       int                 `bson:"signal"`
+	GPSTimestamp primitive.Timestamp `bson:"gps_timestamp"`
+	Timestamp    primitive.Timestamp `bson:"timestamp"`
 }
 
 const (
-	idField         = "_id"
-	parcelIdField   = "parcel_id"
-	coordinateField = "coordinate"
-	isDoorOpenField = "is_door_open"
-	signalField     = "signal"
-	timestampField  = "timestamp"
+	idField           = "_id"
+	parcelIdField     = "parcel_id"
+	coordinateField   = "coordinate"
+	isDoorOpenField   = "is_door_open"
+	signalField       = "signal"
+	gpsTimestampField = "gps_timestamp"
+	timestampField    = "timestamp"
+
+	gpsTimeFormat = "2006-01-02T15:04:05Z"
 )
 
 func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneInput) error {
 	parcelID, err := primitive.ObjectIDFromHex(createOneInput.ParcelID)
+	if err != nil {
+		return err
+	}
+
+	gpsTimestamp, err := time.Parse(gpsTimeFormat, createOneInput.GPSTimestamp)
 	if err != nil {
 		return err
 	}
@@ -46,6 +55,7 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		primitive.E{Key: coordinateField, Value: Coordinate(createOneInput.Coordinate)},
 		primitive.E{Key: isDoorOpenField, Value: createOneInput.IsDoorOpen},
 		primitive.E{Key: signalField, Value: createOneInput.Signal},
+		primitive.E{Key: gpsTimestampField, Value: primitive.Timestamp{T: uint32(gpsTimestamp.Unix()), I: 0}},
 		primitive.E{Key: timestampField, Value: primitive.Timestamp{T: uint32(time.Now().Unix()), I: 0}},
 	}
 
@@ -84,12 +94,13 @@ func (r *mongoDb) GetAll(ctx context.Context, getAllInput model.GetAllInput) ([]
 			return []model.ParcelTravel{}, err
 		}
 		output = append(output, model.ParcelTravel{
-			ID:         elem.ID.Hex(),
-			ParcelID:   elem.ParcelID.Hex(),
-			Coordinate: model.Coordinate(elem.Coordinate),
-			IsDoorOpen: elem.IsDoorOpen,
-			Signal:     elem.Signal,
-			Timestamp:  time.Unix(int64(elem.Timestamp.T), 0),
+			ID:           elem.ID.Hex(),
+			ParcelID:     elem.ParcelID.Hex(),
+			Coordinate:   model.Coordinate(elem.Coordinate),
+			IsDoorOpen:   elem.IsDoorOpen,
+			Signal:       elem.Signal,
+			GPSTimestamp: time.Unix(int64(elem.GPSTimestamp.T), 0),
+			Timestamp:    time.Unix(int64(elem.Timestamp.T), 0),
 		})
 	}
 

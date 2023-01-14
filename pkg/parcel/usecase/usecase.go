@@ -11,7 +11,6 @@ import (
 	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
 	parcelCol "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
 	userModel "github.com/jovanfrandika/smartbox-backend/pkg/user/model"
-	log "github.com/sirupsen/logrus"
 )
 
 func (u *usecase) GetOne(ctx context.Context, getOneInput model.GetOneInput) (model.GetOneResponse, error) {
@@ -71,7 +70,6 @@ func (u *usecase) DeleteOne(ctx context.Context, deleteOneInput model.DeleteOneI
 func (u *usecase) Histories(ctx context.Context, historyInput model.HistoryInput) (model.HistoryResponse, error) {
 	histories, err := (*u.parcelDb).Histories(ctx, historyInput)
 	if err != nil {
-		log.Error(fmt.Sprintf("Error: %s", err.Error()))
 		return model.HistoryResponse{}, err
 	}
 
@@ -116,7 +114,6 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 	}
 
 	updateOneInput := model.UpdateOneInput(parcel)
-	log.Debug(fmt.Sprintf("Progress %v: %v", updateOneInput.ID, updateOneInput.Status))
 	switch updateOneInput.Status {
 	case model.DRAFT_STATUS:
 		if updateProgressInput.UserID != updateOneInput.SenderID {

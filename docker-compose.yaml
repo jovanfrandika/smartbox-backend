@@ -34,18 +34,18 @@ services:
       dockerfile: ./docker/consumer/Dockerfile
     container_name: consumer 
     env_file:
-      - .env
+      - ./.env
     restart: unless-stopped
     networks:
       - smartbox
     depends_on:
       - db
 
-  migrate: &basemigrate
+  migrate:
     profiles: ["tools"]
     image: migrate/migrate
-    entrypoint: "migrate -path /tmp/migrations -database mongodb://mongo:27017/${DB_NAME}"
-    command: up
+    entrypoint: "migrate -path /tmp/migrations -database mongodb://root:dasapidjphdihviohahlihfisfhdioshscaosfhipaefhefh@mongo:27017/test2?authSource=admin"
+    command: ""
     env_file:
       - ./.env
     networks:
@@ -54,11 +54,6 @@ services:
       - db
     volumes:
       - ./db/migration:/tmp/migrations
-
-  create-migration:
-    <<: *basemigrate
-    entrypoint: migrate create -dir /tmp/migrations -ext json
-    command: ""
 
 networks:
   smartbox:

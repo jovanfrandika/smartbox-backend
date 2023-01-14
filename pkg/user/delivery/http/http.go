@@ -8,8 +8,10 @@ import (
 	"reflect"
 	"time"
 
+	log "github.com/jovanfrandika/smartbox-backend/pkg/common/logger"
+	commonModel "github.com/jovanfrandika/smartbox-backend/pkg/common/model"
+
 	"github.com/jovanfrandika/smartbox-backend/pkg/user/model"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,7 +22,7 @@ func (d *delivery) Me(w h.ResponseWriter, r *h.Request) {
 	var payload model.MeInput
 	userID := r.Context().Value("userID")
 	if reflect.TypeOf(userID).String() != "string" {
-		log.Error("Error: Invalid UserID")
+		log.Error("Invalid UserID", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -40,13 +42,21 @@ func (d *delivery) Me(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Me timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Me failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -60,7 +70,7 @@ func (d *delivery) Login(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Error: Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -77,13 +87,21 @@ func (d *delivery) Login(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Login timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Login failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -97,7 +115,7 @@ func (d *delivery) Register(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -114,13 +132,21 @@ func (d *delivery) Register(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Register timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Register failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -134,7 +160,7 @@ func (d *delivery) RefreshAccessToken(w h.ResponseWriter, r *h.Request) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&payload)
 	if err != nil {
-		log.Error("Error: Invalid Payload")
+		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
 	}
@@ -151,13 +177,21 @@ func (d *delivery) RefreshAccessToken(w h.ResponseWriter, r *h.Request) {
 
 	select {
 	case <-ctx.Done():
-		log.Error("Refresh Access Token timeout")
-		h.Error(w, "timeout", h.StatusInternalServerError)
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
 		return
 	case <-ch:
 		if err != nil {
-			log.Error(fmt.Sprintf("Refresh Access Token failed, Error: %v", err))
-			h.Error(w, err.Error(), h.StatusInternalServerError)
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")

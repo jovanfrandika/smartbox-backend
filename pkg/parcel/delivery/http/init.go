@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/jovanfrandika/smartbox-backend/pkg/common/utils"
+	"github.com/jovanfrandika/smartbox-backend/pkg/common/jwt"
 	u "github.com/jovanfrandika/smartbox-backend/pkg/parcel/usecase"
 )
 
@@ -15,11 +15,11 @@ func Deliver(r *chi.Mux, usecase u.Usecase) {
 		usecase: usecase,
 	}
 
-	(*r).With(utils.AuthMiddleware).Get("/", d.Histories)
-	(*r).With(utils.AuthMiddleware).Post("/", d.CreateOne)
-	(*r).With(utils.AuthMiddleware).Put("/", d.UpdateOne)
-	(*r).With(utils.AuthMiddleware).Delete("/", d.DeleteOne)
-	(*r).With(utils.AuthMiddleware).Get("/photo", d.GetPhotoSignedUrl)
-	(*r).With(utils.AuthMiddleware).Post("/progress", d.UpdateProgress)
-	(*r).With(utils.AuthMiddleware).Post("/open", d.OpenDoor)
+	(*r).With(jwt.AuthMiddleware).Get("/", d.Histories)
+	(*r).With(jwt.AuthMiddleware).Post("/", d.CreateOne)
+	(*r).With(jwt.AuthMiddleware).Put("/", d.UpdateOne)
+	(*r).With(jwt.AuthMiddleware).Delete("/", d.DeleteOne)
+	(*r).With(jwt.AuthMiddleware).Get("/photo", d.GetPhotoSignedUrl)
+	(*r).With(jwt.AuthMiddleware).Post("/progress", d.UpdateProgress)
+	(*r).With(jwt.AuthMiddleware).Post("/open", d.OpenDoor)
 }

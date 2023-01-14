@@ -1,0 +1,41 @@
+[
+  {
+    "create": "friendship",
+    "validator": {
+      "$jsonSchema": {
+        "bsonType": "object",
+        "title": "Friendship Object Validation",
+        "required": ["user_id", "friend_user_id"],
+        "properties": {
+          "user_id": {
+            "bsonType": "objectId",
+            "description": "'user_id' must be a objectId and is required"
+          },
+          "friend_user_id": {
+            "bsonType": "objectId",
+            "description": "'friend_user_id' must be a objectId and is required"
+          }
+        }
+      }
+   }
+  },
+  {
+    "createIndexes": "friendship",
+    "indexes": [
+      {
+        "key": {
+          "user_id": 1,
+          "friend_user_id": 1
+        },
+        "name": "user_id to friend_user_id"
+      },
+      {
+        "key": {
+          "friend_user_id": 1,
+          "user_id": 1
+        },
+        "name": "friend_user_id to user_id"
+      }
+    ]
+  }
+]
