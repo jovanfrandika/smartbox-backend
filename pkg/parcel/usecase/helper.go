@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 
 	deviceModel "github.com/jovanfrandika/smartbox-backend/pkg/device/model"
@@ -9,6 +10,23 @@ import (
 	parcelCol "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
 	userModel "github.com/jovanfrandika/smartbox-backend/pkg/user/model"
 )
+
+const CODE_CHARS = "1234567890"
+
+func GenerateCode(length int) (string, error) {
+	buffer := make([]byte, length)
+	_, err := rand.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+
+	otpCharsLength := len(CODE_CHARS)
+	for i := 0; i < length; i++ {
+		buffer[i] = CODE_CHARS[int(buffer[i])%otpCharsLength]
+	}
+
+	return string(buffer), nil
+}
 
 func (u *usecase) buildFullParcel(ctx context.Context, parcels []model.Parcel) ([]model.FullParcel, error) {
 	if len(parcels) <= 0 {

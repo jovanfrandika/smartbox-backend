@@ -16,31 +16,33 @@ type Coordinate struct {
 }
 
 type Parcel struct {
-	ID          primitive.ObjectID `bson:"_id"`
-	Name        string             `bson:"name,omitempty"`
-	Description string             `bson:"description,omitempty"`
-	PhotoUri    string             `bson:"photo_uri,omitempty"`
-	Start       *Coordinate        `bson:"start,omitempty"`
-	End         *Coordinate        `bson:"end,omitempty"`
-	ReceiverID  primitive.ObjectID `bson:"receiver_id,omitempty"`
-	SenderID    primitive.ObjectID `bson:"sender_id,omitempty"`
-	CourierID   primitive.ObjectID `bson:"courier_id,omitempty"`
-	DeviceID    primitive.ObjectID `bson:"device_id,omitempty"`
-	Status      int                `bson:"status,omitempty"`
+	ID           primitive.ObjectID `bson:"_id"`
+	Name         string             `bson:"name,omitempty"`
+	Description  string             `bson:"description,omitempty"`
+	PhotoUri     string             `bson:"photo_uri,omitempty"`
+	IsPhotoValid bool               `bson:"is_photo_valid,omitempty"`
+	Start        *Coordinate        `bson:"start,omitempty"`
+	End          *Coordinate        `bson:"end,omitempty"`
+	ReceiverID   primitive.ObjectID `bson:"receiver_id,omitempty"`
+	SenderID     primitive.ObjectID `bson:"sender_id,omitempty"`
+	CourierID    primitive.ObjectID `bson:"courier_id,omitempty"`
+	DeviceID     primitive.ObjectID `bson:"device_id,omitempty"`
+	Status       int                `bson:"status,omitempty"`
 }
 
 const (
-	idField          = "_id"
-	nameField        = "name"
-	descriptionField = "description"
-	photoUriField    = "photo_uri"
-	startField       = "start"
-	endField         = "end"
-	receiverIdField  = "receiver_id"
-	senderIdField    = "sender_id"
-	courierIdField   = "courier_id"
-	deviceIdField    = "device_id"
-	statusField      = "status"
+	idField           = "_id"
+	nameField         = "name"
+	descriptionField  = "description"
+	photoUriField     = "photo_uri"
+	isPhotoValidField = "is_photo_valid"
+	startField        = "start"
+	endField          = "end"
+	receiverIdField   = "receiver_id"
+	senderIdField     = "sender_id"
+	courierIdField    = "courier_id"
+	deviceIdField     = "device_id"
+	statusField       = "status"
 
 	EmptyObjectId = "000000000000000000000000"
 )
@@ -73,17 +75,18 @@ func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Parcel, error) {
 	}
 
 	return model.Parcel{
-		ID:          res.ID.Hex(),
-		Name:        res.Name,
-		Description: res.Description,
-		PhotoUri:    res.PhotoUri,
-		Start:       start,
-		End:         end,
-		ReceiverID:  res.ReceiverID.Hex(),
-		SenderID:    res.SenderID.Hex(),
-		CourierID:   res.CourierID.Hex(),
-		DeviceID:    res.DeviceID.Hex(),
-		Status:      res.Status,
+		ID:           res.ID.Hex(),
+		Name:         res.Name,
+		Description:  res.Description,
+		PhotoUri:     res.PhotoUri,
+		IsPhotoValid: res.IsPhotoValid,
+		Start:        start,
+		End:          end,
+		ReceiverID:   res.ReceiverID.Hex(),
+		SenderID:     res.SenderID.Hex(),
+		CourierID:    res.CourierID.Hex(),
+		DeviceID:     res.DeviceID.Hex(),
+		Status:       res.Status,
 	}, nil
 }
 
@@ -121,17 +124,18 @@ func (r *mongoDb) GetOneByDeviceAndStatus(ctx context.Context, getOneByDeviceAnd
 	}
 
 	return model.Parcel{
-		ID:          res.ID.Hex(),
-		Name:        res.Name,
-		Description: res.Description,
-		PhotoUri:    res.PhotoUri,
-		Start:       start,
-		End:         end,
-		ReceiverID:  res.ReceiverID.Hex(),
-		SenderID:    res.SenderID.Hex(),
-		CourierID:   res.CourierID.Hex(),
-		DeviceID:    res.DeviceID.Hex(),
-		Status:      res.Status,
+		ID:           res.ID.Hex(),
+		Name:         res.Name,
+		Description:  res.Description,
+		PhotoUri:     res.PhotoUri,
+		IsPhotoValid: res.IsPhotoValid,
+		Start:        start,
+		End:          end,
+		ReceiverID:   res.ReceiverID.Hex(),
+		SenderID:     res.SenderID.Hex(),
+		CourierID:    res.CourierID.Hex(),
+		DeviceID:     res.DeviceID.Hex(),
+		Status:       res.Status,
 	}, nil
 }
 
@@ -153,6 +157,7 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		primitive.E{Key: nameField, Value: ""},
 		primitive.E{Key: descriptionField, Value: ""},
 		primitive.E{Key: photoUriField, Value: fmt.Sprintf("%s/%s.jpg", createOneInput.SenderID, docID.Hex())},
+		primitive.E{Key: isPhotoValidField, Value: false},
 		primitive.E{Key: startField, Value: nil},
 		primitive.E{Key: endField, Value: nil},
 		primitive.E{Key: receiverIdField, Value: emptyID},
@@ -204,6 +209,7 @@ func (r *mongoDb) UpdateOne(ctx context.Context, updateOneInput model.UpdateOneI
 		primitive.E{Key: nameField, Value: updateOneInput.Name},
 		primitive.E{Key: descriptionField, Value: updateOneInput.Description},
 		primitive.E{Key: photoUriField, Value: updateOneInput.PhotoUri},
+		primitive.E{Key: isPhotoValidField, Value: updateOneInput.IsPhotoValid},
 		primitive.E{Key: startField, Value: updateOneInput.Start},
 		primitive.E{Key: endField, Value: updateOneInput.End},
 		primitive.E{Key: senderIdField, Value: senderID},
@@ -281,17 +287,18 @@ func (r *mongoDb) Histories(ctx context.Context, historyInput model.HistoryInput
 		}
 
 		output = append(output, model.Parcel{
-			ID:          elem.ID.Hex(),
-			Name:        elem.Name,
-			Description: elem.Description,
-			PhotoUri:    elem.PhotoUri,
-			Start:       start,
-			End:         end,
-			ReceiverID:  elem.ReceiverID.Hex(),
-			SenderID:    elem.SenderID.Hex(),
-			CourierID:   elem.CourierID.Hex(),
-			DeviceID:    elem.DeviceID.Hex(),
-			Status:      elem.Status,
+			ID:           elem.ID.Hex(),
+			Name:         elem.Name,
+			Description:  elem.Description,
+			PhotoUri:     elem.PhotoUri,
+			IsPhotoValid: elem.IsPhotoValid,
+			Start:        start,
+			End:          end,
+			ReceiverID:   elem.ReceiverID.Hex(),
+			SenderID:     elem.SenderID.Hex(),
+			CourierID:    elem.CourierID.Hex(),
+			DeviceID:     elem.DeviceID.Hex(),
+			Status:       elem.Status,
 		})
 	}
 

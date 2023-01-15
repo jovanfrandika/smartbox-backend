@@ -19,7 +19,10 @@ func Deliver(r *chi.Mux, usecase u.Usecase) {
 	(*r).With(jwt.AuthMiddleware).Post("/", d.CreateOne)
 	(*r).With(jwt.AuthMiddleware).Put("/", d.UpdateOne)
 	(*r).With(jwt.AuthMiddleware).Delete("/", d.DeleteOne)
-	(*r).With(jwt.AuthMiddleware).Get("/photo", d.GetPhotoSignedUrl)
+	(*r).With(jwt.AuthMiddleware).Post("/photo/url", d.GetPhotoSignedUrl)
+	(*r).With(jwt.AuthMiddleware).Post("/photo/check", d.CheckPhoto)
+	(*r).With(jwt.AuthMiddleware).Post("/code/send", d.SendParcelCodeToReceiver)
+	(*r).With(jwt.AuthMiddleware).Post("/code/verify", d.VerifyParcelCode)
 	(*r).With(jwt.AuthMiddleware).Post("/progress", d.UpdateProgress)
 	(*r).With(jwt.AuthMiddleware).Post("/open", d.OpenDoor)
 }

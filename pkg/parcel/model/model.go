@@ -20,31 +20,33 @@ type Coordinate struct {
 }
 
 type Parcel struct {
-	ID          string      `json:"id"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	PhotoUri    string      `json:"photo_uri"`
-	Start       *Coordinate `json:"start"`
-	End         *Coordinate `json:"end"`
-	ReceiverID  string      `json:"receiver_id"`
-	SenderID    string      `json:"sender_id"`
-	CourierID   string      `json:"courier_id"`
-	DeviceID    string      `json:"device_id"`
-	Status      int         `json:"status"`
+	ID           string      `json:"id"`
+	Name         string      `json:"name"`
+	Description  string      `json:"description"`
+	PhotoUri     string      `json:"photo_uri"`
+	IsPhotoValid bool        `json:"is_photo_valid"`
+	Start        *Coordinate `json:"start"`
+	End          *Coordinate `json:"end"`
+	ReceiverID   string      `json:"receiver_id"`
+	SenderID     string      `json:"sender_id"`
+	CourierID    string      `json:"courier_id"`
+	DeviceID     string      `json:"device_id"`
+	Status       int         `json:"status"`
 }
 
 type FullParcel struct {
-	ID          string              `json:"id"`
-	Name        string              `json:"name"`
-	Description string              `json:"description"`
-	PhotoUri    string              `json:"photo_uri"`
-	Start       *Coordinate         `json:"start"`
-	End         *Coordinate         `json:"end"`
-	Receiver    *userModel.User     `json:"receiver"`
-	Sender      *userModel.User     `json:"sender"`
-	Courier     *userModel.User     `json:"courier"`
-	Device      *deviceModel.Device `json:"device"`
-	Status      int                 `json:"status"`
+	ID           string              `json:"id"`
+	Name         string              `json:"name"`
+	Description  string              `json:"description"`
+	PhotoUri     string              `json:"photo_uri"`
+	IsPhotoValid bool                `json:"is_photo_valid"`
+	Start        *Coordinate         `json:"start"`
+	End          *Coordinate         `json:"end"`
+	Receiver     *userModel.User     `json:"receiver"`
+	Sender       *userModel.User     `json:"sender"`
+	Courier      *userModel.User     `json:"courier"`
+	Device       *deviceModel.Device `json:"device"`
+	Status       int                 `json:"status"`
 }
 
 type DeleteOneInput struct {
@@ -68,6 +70,21 @@ type GetOneByDeviceAndStatusInput struct {
 
 type GetPhotoSignedUrlInput struct {
 	ID string `json:"id"`
+}
+
+type CheckPhotoInput struct {
+	ID string `json:"id"`
+}
+
+type SendParcelCodeToReceiverInput struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+type VerifyParcelCodeInput struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+	Code   string `json:"code"`
 }
 
 type UpdateProgressInput struct {

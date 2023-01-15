@@ -17,6 +17,8 @@ type Usecase interface {
 	ConsumeUpdateStatus(ctx context.Context, consumeUpdateStatusInput model.ConsumeUpdateStatusMessage) error
 	CreateOne(ctx context.Context, createOneInput model.CreateOneInput) error
 	GetAll(ctx context.Context) (model.GetAllResponse, error)
+	GetOneByName(ctx context.Context, getOneByName model.GetOneByNameInput) (model.GetOneByNameResponse, error)
+	GetQRCode(ctx context.Context, getQRCodeInput model.GetQRCodeInput) (model.GetQRCodeResponse, error)
 }
 
 func New(config *config.Config, db *rMongo.MongoDb) Usecase {

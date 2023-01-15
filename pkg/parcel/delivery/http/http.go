@@ -235,6 +235,148 @@ func (d *delivery) GetPhotoSignedUrl(w h.ResponseWriter, r *h.Request) {
 	}
 }
 
+func (d *delivery) CheckPhoto(w h.ResponseWriter, r *h.Request) {
+	var payload model.CheckPhotoInput
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		log.Error("Invalid Payload", 0)
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	ch := make(chan int)
+	go func() {
+		err = d.usecase.CheckPhoto(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
+			return
+		}
+		w.WriteHeader(h.StatusNoContent)
+	}
+}
+
+func (d *delivery) SendParcelCodeToReceiver(w h.ResponseWriter, r *h.Request) {
+	var payload model.SendParcelCodeToReceiverInput
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		log.Error("Invalid Payload", 0)
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("userID")
+	if reflect.TypeOf(userID).String() != "string" {
+		log.Error("Invalid UserID", 0)
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+	payload.UserID = fmt.Sprintf("%v", userID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	ch := make(chan int)
+	go func() {
+		err = d.usecase.SendParcelCodeToReceiver(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+		w.WriteHeader(h.StatusNoContent)
+	}
+}
+
+func (d *delivery) VerifyParcelCode(w h.ResponseWriter, r *h.Request) {
+	var payload model.VerifyParcelCodeInput
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		log.Error("Invalid Payload", 0)
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("userID")
+	if reflect.TypeOf(userID).String() != "string" {
+		log.Error("Invalid UserID", 0)
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+	payload.UserID = fmt.Sprintf("%v", userID)
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	ch := make(chan int)
+	go func() {
+		err = d.usecase.VerifyParcelCode(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+		w.WriteHeader(h.StatusNoContent)
+	}
+}
+
 func (d *delivery) UpdateProgress(w h.ResponseWriter, r *h.Request) {
 	var payload model.UpdateProgressInput
 	decoder := json.NewDecoder(r.Body)

@@ -8,18 +8,22 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/jovanfrandika/smartbox-backend/pkg/common/logger"
-
-	"cloud.google.com/go/storage"
+	gcs "cloud.google.com/go/storage"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-redis/redis/v9"
 	"github.com/jovanfrandika/smartbox-backend/pkg/common/config"
+	cEmail "github.com/jovanfrandika/smartbox-backend/pkg/common/email"
+	log "github.com/jovanfrandika/smartbox-backend/pkg/common/logger"
 	cMqtt "github.com/jovanfrandika/smartbox-backend/pkg/common/mqtt"
+	cStorage "github.com/jovanfrandika/smartbox-backend/pkg/common/storage"
 	rDeviceMongo "github.com/jovanfrandika/smartbox-backend/pkg/device/repository/mongo"
 	rDeviceMqtt "github.com/jovanfrandika/smartbox-backend/pkg/device/repository/mqtt"
 	deviceService "github.com/jovanfrandika/smartbox-backend/pkg/device/service"
 	rFriendshipMongo "github.com/jovanfrandika/smartbox-backend/pkg/friendship/repository/mongo"
 	friendshipService "github.com/jovanfrandika/smartbox-backend/pkg/friendship/service"
 	rParcelMongo "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
+	rParcelRedis "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/redis"
 	parcelService "github.com/jovanfrandika/smartbox-backend/pkg/parcel/service"
 	rParcelTravelMongo "github.com/jovanfrandika/smartbox-backend/pkg/parcelTravel/repository/mongo"
 	parcelTravelService "github.com/jovanfrandika/smartbox-backend/pkg/parcelTravel/service"
@@ -49,17 +53,31 @@ func main() {
 
 	db := client.Database(config.Cfg.DBName)
 
-	storageClient, err := storage.NewClient(context.TODO(), option.WithCredentialsFile("files/service-account.json"))
-	if err != nil {
-		log.Fatal(err.Error(), 0)
-	}
-	defer storageClient.Close()
-
 	userDb := rUserMongo.New(db)
 	friendshipDb := rFriendshipMongo.New(db)
 	parcelDb := rParcelMongo.New(db)
 	parcelTravelDb := rParcelTravelMongo.New(db)
 	deviceDb := rDeviceMongo.New(db)
+
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     config.Cfg.RedisAddr,
+		Password: config.Cfg.RedisPassword,
+		DB:       0,
+	})
+
+	parcelCache := rParcelRedis.New(rdb)
+
+	gcsClient, err := gcs.NewClient(context.TODO(), option.WithCredentialsFile("files/service-account.json"))
+	if err != nil {
+		log.Fatal(err.Error(), 0)
+	}
+	defer gcsClient.Close()
+
+	storage := cStorage.New(gcsClient, config.Cfg)
+
+	awsCfg, err := awsConfig.LoadDefaultConfig(context.TODO())
+
+	email := cEmail.New(&awsCfg, config.Cfg)
 
 	mqttClient := cMqtt.Init("stancyzk", *config.Cfg)
 	deviceMq := rDeviceMqtt.New(&mqttClient)
@@ -74,13 +92,15 @@ func main() {
 
 	parcelRouter := chi.NewRouter()
 	parcelService.Init(parcelService.InitInput{
-		ParcelDb:      &parcelDb,
-		UserDb:        &userDb,
-		DeviceDb:      &deviceDb,
-		DeviceMq:      &deviceMq,
-		Config:        config.Cfg,
-		Router:        parcelRouter,
-		StorageClient: storageClient,
+		ParcelDb:    &parcelDb,
+		ParcelCache: &parcelCache,
+		UserDb:      &userDb,
+		DeviceDb:    &deviceDb,
+		DeviceMq:    &deviceMq,
+		Config:      config.Cfg,
+		Router:      parcelRouter,
+		Storage:     &storage,
+		Email:       &email,
 	})
 
 	parcelTravelRouter := chi.NewRouter()

@@ -24,6 +24,10 @@ type GetOneByNameInput struct {
 	Name string `json:"name"`
 }
 
+type GetQRCodeInput struct {
+	ID string `json:"id"`
+}
+
 type ConsumeUpdateStatusMessage struct {
 	Name        string `json:"name"`
 	Status      int    `json:"status"`
@@ -36,6 +40,12 @@ type UpdateStatusInput struct {
 }
 
 type GetOneResponse = Device
+
+type GetOneByNameResponse = Device
+
+type GetQRCodeResponse = struct {
+	QRCode []byte
+}
 
 type GetAllResponse struct {
 	Devices []Device `json:"devices"`

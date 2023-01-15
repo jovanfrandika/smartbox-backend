@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	"cloud.google.com/go/storage"
+	"github.com/jovanfrandika/smartbox-backend/pkg/common/email"
 	deviceModel "github.com/jovanfrandika/smartbox-backend/pkg/device/model"
 	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
 	parcelCol "github.com/jovanfrandika/smartbox-backend/pkg/parcel/repository/mongo"
 	userModel "github.com/jovanfrandika/smartbox-backend/pkg/user/model"
+)
+
+const (
+	CODE_EMAIL_SUBJECT = "Kode membuka untuk paket %v"
+	CODE_EMAIL_BODY    = "Berikut adalah kode untuk membuka paket %v\n\t %v \n Terima kasih,\nSalam admin"
 )
 
 func (u *usecase) GetOne(ctx context.Context, getOneInput model.GetOneInput) (model.GetOneResponse, error) {
@@ -89,15 +93,7 @@ func (u *usecase) GetPhotoSignedUrl(ctx context.Context, getPhotoSignedUrlInput 
 		return model.GetPhotoSignedUrlResponse{}, err
 	}
 
-	opts := &storage.SignedURLOptions{
-		Scheme: storage.SigningSchemeV4,
-		Method: "PUT",
-		Headers: []string{
-			"Content-Type:application/octet-stream",
-		},
-		Expires: time.Now().Add(15 * time.Minute),
-	}
-	url, err := u.storageClient.Bucket(u.config.BucketName).SignedURL(res.PhotoUri, opts)
+	url, err := (*u.storage).GetSignedUrl(res.PhotoUri)
 	if err != nil {
 		return model.GetPhotoSignedUrlResponse{}, err
 	}
@@ -105,6 +101,94 @@ func (u *usecase) GetPhotoSignedUrl(ctx context.Context, getPhotoSignedUrlInput 
 	return model.GetPhotoSignedUrlResponse{
 		URL: url,
 	}, nil
+}
+
+func (u *usecase) CheckPhoto(ctx context.Context, checkPhotoInput model.CheckPhotoInput) error {
+	res, err := (*u.parcelDb).GetOne(ctx, checkPhotoInput.ID)
+	if err != nil {
+		return err
+	}
+
+	updateOneInput := model.UpdateOneInput(res)
+	updateOneInput.IsPhotoValid = (*u.storage).IsObjectValid(ctx, res.PhotoUri)
+
+	err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *usecase) SendParcelCodeToReceiver(ctx context.Context, sendParcelCodeToReceiverInput model.SendParcelCodeToReceiverInput) error {
+	parcel, err := (*u.parcelDb).GetOne(ctx, sendParcelCodeToReceiverInput.ID)
+	if err != nil {
+		return err
+	}
+
+	if sendParcelCodeToReceiverInput.UserID != parcel.CourierID {
+		return errors.New("Insufficient Permission")
+	}
+
+	code, _ := (*u.parcelCache).GetParcelCode(ctx, parcel.ID)
+	if code != "" {
+		return errors.New("Parcel code already exists")
+	}
+
+	code, err = GenerateCode(6)
+	if err != nil {
+		return errors.New("Generate code failed")
+	}
+
+	err = (*u.parcelCache).SetParcelCode(ctx, parcel.ID, code)
+	if err != nil {
+		return errors.New("Generate code failed")
+	}
+
+	users, err := (*u.userDb).GetMany(ctx, []string{parcel.SenderID})
+	if err != nil || len(users) <= 0 {
+		return errors.New("User not found")
+	}
+
+	err = (*u.email).Send(ctx, email.SendInput{
+		To:      users[0].Email,
+		Subject: fmt.Sprintf(CODE_EMAIL_SUBJECT, parcel.Name),
+		Body:    fmt.Sprintf(CODE_EMAIL_BODY, parcel.Name, code),
+	})
+	if err != nil {
+		return errors.New("Send code failed")
+	}
+
+	return nil
+}
+
+func (u *usecase) VerifyParcelCode(ctx context.Context, verifyParcelCodeInput model.VerifyParcelCodeInput) error {
+	parcel, err := (*u.parcelDb).GetOne(ctx, verifyParcelCodeInput.ID)
+	if err != nil {
+		return err
+	}
+
+	if verifyParcelCodeInput.UserID != parcel.ReceiverID {
+		return errors.New("Insufficient permission")
+	}
+
+	code, err := (*u.parcelCache).GetParcelCode(ctx, parcel.ID)
+	if err != nil {
+		return errors.New("Code already expired")
+	}
+
+	if verifyParcelCodeInput.Code != code {
+		return errors.New("Invalid code")
+	}
+
+	updateOneInput := model.UpdateOneInput(parcel)
+	updateOneInput.Status = model.ARRIVED_STATUS
+	err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.UpdateProgressInput) (model.UpdateProgressResponse, error) {
@@ -124,9 +208,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("name or description is too short")
 		}
 
-		obj := u.storageClient.Bucket(u.config.BucketName).Object(updateOneInput.PhotoUri)
-		_, err := obj.Attrs(ctx)
-		if err != nil {
+		if !updateOneInput.IsPhotoValid {
 			return model.UpdateProgressResponse{}, fmt.Errorf("Photo not found")
 		}
 
@@ -188,17 +270,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, err
 		}
 	case model.ON_GOING_STATUS:
-		if updateProgressInput.UserID != updateOneInput.CourierID {
-			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
-		}
-
-		// TODO: implement email verification
-		updateOneInput.Status = model.ARRIVED_STATUS
-
-		err := (*u.parcelDb).UpdateOne(ctx, updateOneInput)
-		if err != nil {
-			return model.UpdateProgressResponse{}, err
-		}
+		return model.UpdateProgressResponse{}, errors.New("Not implemented")
 	case model.ARRIVED_STATUS:
 		if updateProgressInput.UserID != updateOneInput.ReceiverID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")

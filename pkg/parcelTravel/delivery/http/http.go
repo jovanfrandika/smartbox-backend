@@ -17,10 +17,8 @@ const (
 )
 
 func (d *delivery) GetAll(w h.ResponseWriter, r *h.Request) {
-	var payload model.GetAllInput
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&payload)
-	if err != nil {
+	parcelID := r.URL.Query().Get("parcel_id")
+	if parcelID != "" {
 		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
@@ -30,9 +28,12 @@ func (d *delivery) GetAll(w h.ResponseWriter, r *h.Request) {
 	defer cancel()
 
 	var res model.GetAllResponse
+	var err error
 	ch := make(chan int)
 	go func() {
-		res, err = d.usecase.GetAll(ctx, payload)
+		res, err = d.usecase.GetAll(ctx, model.GetAllInput{
+			ParcelID: parcelID,
+		})
 		ch <- 1
 	}()
 

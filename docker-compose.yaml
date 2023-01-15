@@ -12,6 +12,21 @@ services:
     networks:
       - smartbox
     restart: unless-stopped
+
+  cache:
+    image: redis:7.0.7-alpine
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - 6379:6379
+    networks:
+      - smartbox
+    volumes: 
+      - ./cache:/data
   
   main:
     build: 
@@ -44,7 +59,7 @@ services:
   migrate:
     profiles: ["tools"]
     image: migrate/migrate
-    entrypoint: "migrate -path /tmp/migrations -database mongodb://root:dasapidjphdihviohahlihfisfhdioshscaosfhipaefhefh@mongo:27017/test2?authSource=admin"
+    entrypoint: "migrate -path /tmp/migrations"
     command: ""
     env_file:
       - ./.env
