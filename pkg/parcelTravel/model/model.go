@@ -13,6 +13,8 @@ type ParcelTravel struct {
 	ID           string     `json:"id"`
 	ParcelID     string     `json:"parcel_id"`
 	Coordinate   Coordinate `json:"coordinate"`
+	Temp         float32    `json:"temp"`
+	Humid        float32    `json:"humid"`
 	IsDoorOpen   bool       `json:"is_door_open"`
 	Signal       int        `json:"signal"`
 	GPSTimestamp time.Time  `json:"gps_timestamp"`
@@ -22,6 +24,8 @@ type ParcelTravel struct {
 type CreateOneInput struct {
 	ParcelID     string     `json:"parcel_id"`
 	Coordinate   Coordinate `json:"coordinate"`
+	Temp         float32    `json:"temp"`
+	Humid        float32    `json:"humid"`
 	IsDoorOpen   bool       `json:"is_door_open"`
 	Signal       int        `json:"signal"`
 	GPSTimestamp string     `json:"gps_timestamp"`
@@ -38,6 +42,8 @@ type GetAllResponse struct {
 type ConsumeTravelLogMessage struct {
 	DeviceName   string     `json:"device_name"`
 	Coordinate   Coordinate `json:"coordinate"`
+	Temp         float32    `json:"temp"`
+	Humid        float32    `json:"humid"`
 	IsDoorOpen   bool       `json:"is_door_open"`
 	Signal       int        `json:"signal"`
 	GPSTimestamp string     `json:"gps_timestamp"`

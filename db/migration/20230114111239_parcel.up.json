@@ -42,6 +42,14 @@
               "long": {
                 "bsonType": "double",
                 "description": "'long' must be a double"
+              },
+              "temp": {
+                "bsonType": "double",
+                "description": "'temp' must be a double"
+              },
+              "humid": {
+                "bsonType": "double",
+                "description": "'humid' must be a double"
               }
             }
           },
@@ -56,6 +64,14 @@
               "long": {
                 "bsonType": "double",
                 "description": "'long' must be a double"
+              },
+              "temp": {
+                "bsonType": "double",
+                "description": "'temp' must be a double"
+              },
+              "humid": {
+                "bsonType": "double",
+                "description": "'humid' must be a double"
               }
             }
           },

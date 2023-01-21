@@ -10,7 +10,8 @@ import (
 type Config struct {
 	BucketName          string
 	StorageHost         string
-	EmailIdentitySource string
+	EmailFrom           string
+	EmailPassword       string
 	Host                string
 	DBName              string
 	MongoDBUri          string
@@ -38,7 +39,8 @@ func Init() {
 		Cfg.BucketName = getenvStr("BUCKET_NAME")
 		Cfg.StorageHost = getenvStr("STORAGE_HOST")
 
-		Cfg.EmailIdentitySource = getenvStr("EMAIL_IDENTITY_SOURCE")
+		Cfg.EmailFrom = getenvStr("EMAIL_FROM")
+		Cfg.EmailPassword = getenvStr("EMAIL_PASSWORD")
 
 		Cfg.DBName = getenvStr("DB_NAME")
 		Cfg.MongoDBUri = getenvStr("MONGODB_URI")

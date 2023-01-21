@@ -21,6 +21,8 @@ type ParcelTravel struct {
 	ID           primitive.ObjectID `bson:"_id"`
 	ParcelID     primitive.ObjectID `bson:"parcel_id"`
 	Coordinate   Coordinate         `bson:"coordinate"`
+	Temp         float32            `bson:"temp"`
+	Humid        float32            `bson:"humid"`
 	IsDoorOpen   bool               `bson:"is_door_open"`
 	Signal       int                `bson:"signal"`
 	GPSTimestamp primitive.DateTime `bson:"gps_timestamp"`
@@ -31,6 +33,8 @@ const (
 	idField           = "_id"
 	parcelIdField     = "parcel_id"
 	coordinateField   = "coordinate"
+	tempField         = "temp"
+	humidField        = "humid"
 	isDoorOpenField   = "is_door_open"
 	signalField       = "signal"
 	gpsTimestampField = "gps_timestamp"
@@ -54,6 +58,8 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 	doc := bson.D{
 		primitive.E{Key: parcelIdField, Value: parcelID},
 		primitive.E{Key: coordinateField, Value: Coordinate(createOneInput.Coordinate)},
+		primitive.E{Key: tempField, Value: createOneInput.Temp},
+		primitive.E{Key: humidField, Value: createOneInput.Humid},
 		primitive.E{Key: isDoorOpenField, Value: createOneInput.IsDoorOpen},
 		primitive.E{Key: signalField, Value: createOneInput.Signal},
 		primitive.E{Key: gpsTimestampField, Value: primitive.NewDateTimeFromTime(gpsTimestamp.UTC())},
@@ -98,6 +104,8 @@ func (r *mongoDb) GetAll(ctx context.Context, getAllInput model.GetAllInput) ([]
 			ID:           elem.ID.Hex(),
 			ParcelID:     elem.ParcelID.Hex(),
 			Coordinate:   model.Coordinate(elem.Coordinate),
+			Temp:         elem.Temp,
+			Humid:        elem.Humid,
 			IsDoorOpen:   elem.IsDoorOpen,
 			Signal:       elem.Signal,
 			GPSTimestamp: elem.GPSTimestamp.Time(),

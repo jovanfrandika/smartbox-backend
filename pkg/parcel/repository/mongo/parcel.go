@@ -11,8 +11,10 @@ import (
 )
 
 type Coordinate struct {
-	Lat  float32 `bson:"lat,omitempty"`
-	Long float32 `bson:"long,omitempty"`
+	Lat   float32 `bson:"lat,omitempty"`
+	Long  float32 `bson:"long,omitempty"`
+	Temp  float32 `bson:"temp,omitempty"`
+	Humid float32 `bson:"humid,omitempty"`
 }
 
 type Parcel struct {
@@ -62,15 +64,19 @@ func (r *mongoDb) GetOne(ctx context.Context, id string) (model.Parcel, error) {
 	var start *model.Coordinate
 	if res.Start != nil {
 		start = &model.Coordinate{
-			Lat:  res.Start.Lat,
-			Long: res.Start.Long,
+			Lat:   res.Start.Lat,
+			Long:  res.Start.Long,
+			Temp:  res.Start.Temp,
+			Humid: res.Start.Humid,
 		}
 	}
 	var end *model.Coordinate
 	if res.End != nil {
 		end = &model.Coordinate{
-			Lat:  res.End.Lat,
-			Long: res.End.Long,
+			Lat:   res.End.Lat,
+			Long:  res.End.Long,
+			Temp:  res.End.Temp,
+			Humid: res.End.Humid,
 		}
 	}
 
@@ -111,15 +117,19 @@ func (r *mongoDb) GetOneByDeviceAndStatus(ctx context.Context, getOneByDeviceAnd
 	var start *model.Coordinate
 	if res.Start != nil {
 		start = &model.Coordinate{
-			Lat:  res.Start.Lat,
-			Long: res.Start.Long,
+			Lat:   res.Start.Lat,
+			Long:  res.Start.Long,
+			Temp:  res.Start.Temp,
+			Humid: res.Start.Humid,
 		}
 	}
 	var end *model.Coordinate
 	if res.End != nil {
 		end = &model.Coordinate{
-			Lat:  res.End.Lat,
-			Long: res.End.Long,
+			Lat:   res.End.Lat,
+			Long:  res.End.Long,
+			Temp:  res.End.Temp,
+			Humid: res.End.Humid,
 		}
 	}
 
@@ -274,15 +284,19 @@ func (r *mongoDb) Histories(ctx context.Context, historyInput model.HistoryInput
 		var start *model.Coordinate
 		if elem.Start != nil {
 			start = &model.Coordinate{
-				Lat:  elem.Start.Lat,
-				Long: elem.Start.Long,
+				Lat:   elem.Start.Lat,
+				Long:  elem.Start.Long,
+				Temp:  elem.Start.Temp,
+				Humid: elem.Start.Humid,
 			}
 		}
 		var end *model.Coordinate
 		if elem.End != nil {
 			end = &model.Coordinate{
-				Lat:  elem.End.Lat,
-				Long: elem.End.Long,
+				Lat:   elem.End.Lat,
+				Long:  elem.End.Long,
+				Temp:  elem.End.Temp,
+				Humid: elem.End.Humid,
 			}
 		}
 

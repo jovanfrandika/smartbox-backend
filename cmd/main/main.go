@@ -9,7 +9,6 @@ import (
 	"time"
 
 	gcs "cloud.google.com/go/storage"
-	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v9"
 	"github.com/jovanfrandika/smartbox-backend/pkg/common/config"
@@ -75,9 +74,7 @@ func main() {
 
 	storage := cStorage.New(gcsClient, config.Cfg)
 
-	awsCfg, err := awsConfig.LoadDefaultConfig(context.TODO())
-
-	email := cEmail.New(&awsCfg, config.Cfg)
+	email := cEmail.New(config.Cfg)
 
 	mqttClient := cMqtt.Init("stancyzk", *config.Cfg)
 	deviceMq := rDeviceMqtt.New(&mqttClient)

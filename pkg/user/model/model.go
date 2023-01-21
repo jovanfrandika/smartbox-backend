@@ -1,5 +1,10 @@
 package model
 
+const (
+	CUSTOMER_ROLE = 1
+	COURIER_ROLE  = 2
+)
+
 type AuthTokens struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`

@@ -15,10 +15,6 @@ type Redis interface {
 	GetParcelCode(ctx context.Context, parcel_id string) (string, error)
 }
 
-const (
-	collectionName = "parcel"
-)
-
 func New(redisClient *r.Client) Redis {
 	return &redis{
 		redisClient: redisClient,

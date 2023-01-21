@@ -15,8 +15,10 @@ const (
 )
 
 type Coordinate struct {
-	Lat  float32 `json:"lat"`
-	Long float32 `json:"long"`
+	Lat   float32 `json:"lat"`
+	Long  float32 `json:"long"`
+	Temp  float32 `json:"temp"`
+	Humid float32 `json:"humid"`
 }
 
 type Parcel struct {
