@@ -243,6 +243,7 @@ func (r *mongoDb) Histories(ctx context.Context, historyInput model.HistoryInput
 			Value: bson.A{
 				bson.D{{Key: receiverIdField, Value: bson.D{{Key: "$eq", Value: userID}}}},
 				bson.D{{Key: senderIdField, Value: bson.D{{Key: "$eq", Value: userID}}}},
+				bson.D{{Key: courierIdField, Value: bson.D{{Key: "$eq", Value: userID}}}},
 			},
 		},
 	}
