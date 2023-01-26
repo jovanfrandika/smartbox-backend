@@ -96,9 +96,9 @@ func (d *delivery) GetAll(w h.ResponseWriter, r *h.Request) {
 	}
 }
 
-func (d *delivery) GetOneByName(w h.ResponseWriter, r *h.Request) {
-	deviceName := chi.URLParam(r, "deviceName")
-	if deviceName == "" {
+func (d *delivery) GetOne(w h.ResponseWriter, r *h.Request) {
+	deviceID := chi.URLParam(r, "ID")
+	if deviceID == "" {
 		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return
@@ -108,11 +108,11 @@ func (d *delivery) GetOneByName(w h.ResponseWriter, r *h.Request) {
 	defer cancel()
 
 	var err error
-	var res model.GetOneByNameResponse
+	var res model.GetOneResponse
 	ch := make(chan int)
 	go func() {
-		res, err = d.usecase.GetOneByName(ctx, model.GetOneByNameInput{
-			Name: deviceName,
+		res, err = d.usecase.GetOne(ctx, model.GetOneInput{
+			ID: deviceID,
 		})
 		ch <- 1
 	}()

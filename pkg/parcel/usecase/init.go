@@ -42,11 +42,13 @@ type Usecase interface {
 	UpdateOne(ctx context.Context, updateOneInput model.UpdateOneInput) error
 	DeleteOne(ctx context.Context, deleteOneInput model.DeleteOneInput) error
 	Histories(ctx context.Context, historyInput model.HistoryInput) (model.HistoryResponse, error)
+	GetNearbyPickUps(ctx context.Context, getNearyPickUpsInput model.GetNearbyPickUpsInput) (model.GetNearbyPickUpsResponse, error)
 	GetPhotoSignedUrl(ctx context.Context, getPhotoSignedUrlInput model.GetPhotoSignedUrlInput) (model.GetPhotoSignedUrlResponse, error)
 	CheckPhoto(ctx context.Context, checkPhotoInput model.CheckPhotoInput) error
 	UpdateProgress(ctx context.Context, updateProgressInput model.UpdateProgressInput) (model.UpdateProgressResponse, error)
 	OpenDoor(ctx context.Context, openDoorInput model.OpenDoorInput) error
-	SendParcelCodeToReceiver(ctx context.Context, sendParcelCodeToReceiverInput model.SendParcelCodeToReceiverInput) error
+	CloseDoor(ctx context.Context, closeDoorInput model.CloseDoorInput) error
+	SendParcelCode(ctx context.Context, sendParcelCodeToReceiverInput model.SendParcelCodeInput) error
 	VerifyParcelCode(ctx context.Context, verifyParcelCodeInput model.VerifyParcelCodeInput) error
 }
 

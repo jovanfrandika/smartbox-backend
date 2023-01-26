@@ -18,6 +18,7 @@ type MongoDb interface {
 	UpdateOne(ctx context.Context, updateOneInput model.UpdateOneInput) error
 	DeleteOne(ctx context.Context, deleteOneInput model.DeleteOneInput) error
 	Histories(ctx context.Context, historyInput model.HistoryInput) ([]model.Parcel, error)
+	GetNearbyPickUps(ctx context.Context, getNearbyPickUpsInput model.GetNearbyPickUpsInput) ([]model.Parcel, error)
 }
 
 const (

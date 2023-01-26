@@ -10,6 +10,14 @@ type AuthTokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type User struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"-"`
+	Role     int    `json:"role"`
+}
+
 type MeInput struct {
 	ID string `json:"id"`
 }
@@ -30,12 +38,8 @@ type RefreshInput struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type User struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"-"`
-	Role     int    `json:"role"`
+type SearchInput struct {
+	Email string `json:"email"`
 }
 
 type MeResponse = User
@@ -46,4 +50,8 @@ type LoginResponse = AuthTokens
 
 type RefreshResponse struct {
 	AccessToken string `json:"access_token"`
+}
+
+type SearchResponse struct {
+	Users []User `json:"users"`
 }

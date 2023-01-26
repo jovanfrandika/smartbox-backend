@@ -87,13 +87,29 @@ func (u *usecase) Histories(ctx context.Context, historyInput model.HistoryInput
 	}, nil
 }
 
+func (u *usecase) GetNearbyPickUps(ctx context.Context, getNearyPickUpsInput model.GetNearbyPickUpsInput) (model.GetNearbyPickUpsResponse, error) {
+	pickUps, err := (*u.parcelDb).GetNearbyPickUps(ctx, getNearyPickUpsInput)
+	if err != nil {
+		return model.GetNearbyPickUpsResponse{}, err
+	}
+
+	fullParcels, err := u.buildFullParcel(ctx, pickUps)
+	if err != nil {
+		return model.GetNearbyPickUpsResponse{}, err
+	}
+
+	return model.GetNearbyPickUpsResponse{
+		Parcels: fullParcels,
+	}, nil
+}
+
 func (u *usecase) GetPhotoSignedUrl(ctx context.Context, getPhotoSignedUrlInput model.GetPhotoSignedUrlInput) (model.GetPhotoSignedUrlResponse, error) {
 	res, err := (*u.parcelDb).GetOne(ctx, getPhotoSignedUrlInput.ID)
 	if err != nil {
 		return model.GetPhotoSignedUrlResponse{}, err
 	}
 
-	url, err := (*u.storage).GetSignedUrl(res.PhotoUri)
+	url, err := (*u.storage).GetSignedUrl(u.buildPhotoUri(res, getPhotoSignedUrlInput.Status))
 	if err != nil {
 		return model.GetPhotoSignedUrlResponse{}, err
 	}
@@ -110,7 +126,20 @@ func (u *usecase) CheckPhoto(ctx context.Context, checkPhotoInput model.CheckPho
 	}
 
 	updateOneInput := model.UpdateOneInput(res)
-	updateOneInput.IsPhotoValid = (*u.storage).IsObjectValid(ctx, res.PhotoUri)
+	updatedAt, err := (*u.storage).GetObjectUpdatedAt(ctx, u.buildPhotoUri(res, checkPhotoInput.Status))
+	if err != nil {
+		return err
+	}
+
+	if checkPhotoInput.Status == model.PICK_UP_STATUS {
+		updateOneInput.PickUpPhoto = &model.Photo{
+			UpdatedAt: updatedAt,
+		}
+	} else if checkPhotoInput.Status == model.ARRIVED_STATUS {
+		updateOneInput.ArrivedPhoto = &model.Photo{
+			UpdatedAt: updatedAt,
+		}
+	}
 
 	err = (*u.parcelDb).UpdateOne(ctx, updateOneInput)
 	if err != nil {
@@ -120,14 +149,18 @@ func (u *usecase) CheckPhoto(ctx context.Context, checkPhotoInput model.CheckPho
 	return nil
 }
 
-func (u *usecase) SendParcelCodeToReceiver(ctx context.Context, sendParcelCodeToReceiverInput model.SendParcelCodeToReceiverInput) error {
-	parcel, err := (*u.parcelDb).GetOne(ctx, sendParcelCodeToReceiverInput.ID)
+func (u *usecase) SendParcelCode(ctx context.Context, sendParcelCodeInput model.SendParcelCodeInput) error {
+	parcel, err := (*u.parcelDb).GetOne(ctx, sendParcelCodeInput.ID)
 	if err != nil {
 		return err
 	}
 
-	if sendParcelCodeToReceiverInput.UserID != parcel.CourierID {
+	if sendParcelCodeInput.UserID != parcel.CourierID {
 		return errors.New("Insufficient Permission")
+	}
+
+	if !(sendParcelCodeInput.UserID == parcel.ReceiverID || sendParcelCodeInput.UserID == parcel.SenderID) {
+		return errors.New("Wrong code recipient")
 	}
 
 	code, _ := (*u.parcelCache).GetParcelCode(ctx, parcel.ID)
@@ -135,7 +168,7 @@ func (u *usecase) SendParcelCodeToReceiver(ctx context.Context, sendParcelCodeTo
 		return errors.New("Parcel code already exists")
 	}
 
-	code, err = GenerateCode(6)
+	code, err = generateCode(6)
 	if err != nil {
 		return errors.New("Generate code failed")
 	}
@@ -145,7 +178,7 @@ func (u *usecase) SendParcelCodeToReceiver(ctx context.Context, sendParcelCodeTo
 		return errors.New("Generate code failed")
 	}
 
-	users, err := (*u.userDb).GetMany(ctx, []string{parcel.SenderID})
+	users, err := (*u.userDb).GetMany(ctx, []string{sendParcelCodeInput.ToUserID})
 	if err != nil || len(users) <= 0 {
 		return errors.New("User not found")
 	}
@@ -168,7 +201,7 @@ func (u *usecase) VerifyParcelCode(ctx context.Context, verifyParcelCodeInput mo
 		return err
 	}
 
-	if verifyParcelCodeInput.UserID != parcel.ReceiverID {
+	if !(verifyParcelCodeInput.UserID == parcel.ReceiverID || verifyParcelCodeInput.UserID == parcel.SenderID) {
 		return errors.New("Insufficient permission")
 	}
 
@@ -204,19 +237,19 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
 		}
 
-		if len(updateOneInput.Name) <= 3 || len(updateOneInput.Description) <= 3 {
-			return model.UpdateProgressResponse{}, errors.New("name or description is too short")
+		if len(updateOneInput.Name) <= 3 {
+			return model.UpdateProgressResponse{}, errors.New("Name is too short")
 		}
 
-		if !updateOneInput.IsPhotoValid {
-			return model.UpdateProgressResponse{}, fmt.Errorf("Photo not found")
+		if len(updateOneInput.Description) <= 3 {
+			return model.UpdateProgressResponse{}, errors.New("Description is too short")
 		}
 
-		if updateOneInput.Start == nil {
-			return model.UpdateProgressResponse{}, errors.New("start coor can't be empty")
+		if updateOneInput.PickUpCoor == nil {
+			return model.UpdateProgressResponse{}, errors.New("Pick up coor can't be empty")
 		}
-		if updateOneInput.End == nil {
-			return model.UpdateProgressResponse{}, errors.New("end coor can't be empty")
+		if updateOneInput.ArrivedCoor == nil {
+			return model.UpdateProgressResponse{}, errors.New("Arrived coor can't be empty")
 		}
 
 		if updateOneInput.ReceiverID == parcelCol.EmptyObjectId {
@@ -235,7 +268,7 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 		}
 
 		if updateOneInput.DeviceID == parcelCol.EmptyObjectId {
-			return model.UpdateProgressResponse{}, errors.New("device can't be empty")
+			return model.UpdateProgressResponse{}, errors.New("Device can't be empty")
 		}
 
 		updateOneInput.Status = model.PICK_UP_STATUS
@@ -245,15 +278,19 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 			return model.UpdateProgressResponse{}, err
 		}
 	case model.PICK_UP_STATUS:
-		if updateProgressInput.UserID != updateOneInput.SenderID {
+		if updateProgressInput.UserID != updateOneInput.CourierID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
+		}
+
+		if updateOneInput.PickUpPhoto == nil {
+			return model.UpdateProgressResponse{}, errors.New("Pick up Photo can't be empty")
 		}
 
 		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
-		err = (*u.deviceMq).PubStartTravel(device.Name, parcel.End.Lat, parcel.End.Long)
+		err = (*u.deviceMq).PubStartTravel(device.Name)
 		if err != nil {
 			return model.UpdateProgressResponse{}, err
 		}
@@ -274,6 +311,10 @@ func (u *usecase) UpdateProgress(ctx context.Context, updateProgressInput model.
 	case model.ARRIVED_STATUS:
 		if updateProgressInput.UserID != updateOneInput.ReceiverID {
 			return model.UpdateProgressResponse{}, errors.New("insufficient permission")
+		}
+
+		if updateOneInput.ArrivedPhoto == nil {
+			return model.UpdateProgressResponse{}, errors.New("Arrived Photo can't be empty")
 		}
 
 		device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
@@ -376,6 +417,57 @@ func (u *usecase) OpenDoor(ctx context.Context, openDoorInput model.OpenDoorInpu
 		return err
 	}
 	err = (*u.deviceMq).PubOpenDoor(device.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *usecase) CloseDoor(ctx context.Context, closeDoorInput model.CloseDoorInput) error {
+	parcel, err := (*u.parcelDb).GetOne(ctx, closeDoorInput.ID)
+	if err != nil {
+		return err
+	}
+
+	userIDs := []string{parcel.SenderID}
+	if parcel.SenderID != parcelCol.EmptyObjectId {
+		userIDs = append(userIDs, parcel.SenderID)
+	}
+	if parcel.CourierID != parcelCol.EmptyObjectId {
+		userIDs = append(userIDs, parcel.CourierID)
+	}
+
+	users, err := (*u.userDb).GetMany(ctx, userIDs)
+	if err != nil {
+		return err
+	}
+
+	userMap := map[string]userModel.User{}
+	for _, user := range users {
+		if _, ok := userMap[user.ID]; !ok {
+			userMap[user.ID] = user
+		}
+	}
+
+	switch parcel.Status {
+	case model.PICK_UP_STATUS:
+		if closeDoorInput.UserID != parcel.SenderID {
+			return errors.New("insufficient permission")
+		}
+	case model.ARRIVED_STATUS:
+		if closeDoorInput.UserID != parcel.ReceiverID {
+			return errors.New("insufficient permission")
+		}
+	default:
+		return errors.New(fmt.Sprintf("invalid request: %s", parcel.ID))
+	}
+
+	device, err := (*u.deviceDb).GetOne(ctx, deviceModel.GetOneInput{ID: parcel.DeviceID})
+	if err != nil {
+		return err
+	}
+	err = (*u.deviceMq).PubCloseDoor(device.Name)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,7 @@
   {
     "create": "parcel_travel",
     "timeseries": {
-      "timeField": "timestamp",
+      "timeField": "ts",
       "metaField": "parcel_id"
     }
   }

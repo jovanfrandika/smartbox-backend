@@ -16,6 +16,7 @@ type MongoDb interface {
 	GetUser(ctx context.Context, id string) (model.User, error)
 	GetMany(ctx context.Context, userIDs []string) ([]model.User, error)
 	Login(ctx context.Context, loginInput model.LoginInput) (model.User, error)
+	Search(ctx context.Context, email string) ([]model.User, error)
 }
 
 const (

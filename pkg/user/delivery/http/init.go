@@ -16,6 +16,7 @@ func Deliver(r *chi.Mux, usecase u.Usecase) {
 	}
 
 	(*r).With(jwt.AuthMiddleware).Get("/me", d.Me)
+	(*r).With(jwt.AuthMiddleware).Get("/search", d.Search)
 	(*r).Post("/login", d.Login)
 	(*r).Post("/register", d.Register)
 	(*r).Post("/refresh", d.RefreshAccessToken)

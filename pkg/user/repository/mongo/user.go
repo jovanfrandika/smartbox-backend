@@ -72,6 +72,55 @@ func (r *mongoDb) GetUser(ctx context.Context, id string) (model.User, error) {
 	}, nil
 }
 
+func (r *mongoDb) Search(ctx context.Context, email string) ([]model.User, error) {
+	cursor, err := r.DbCollection.Find(
+		ctx,
+		bson.D{{
+			Key: "$and",
+			Value: bson.A{
+				bson.D{{
+					Key: "$text",
+					Value: bson.D{{
+						Key:   "$search",
+						Value: email,
+					}},
+				}},
+				bson.D{{
+					Key:   roleField,
+					Value: model.CUSTOMER_ROLE,
+				}},
+			},
+		}},
+		nil,
+	)
+	if err != nil {
+		return []model.User{}, err
+	}
+	defer cursor.Close(nil)
+
+	var output []model.User
+	for cursor.Next(ctx) {
+		var elem User
+		err := cursor.Decode(&elem)
+		if err != nil {
+			return []model.User{}, err
+		}
+
+		output = append(output, model.User{
+			ID:    elem.ID.Hex(),
+			Name:  elem.Name,
+			Email: elem.Email,
+			Role:  elem.Role,
+		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		return []model.User{}, err
+	}
+
+	return output, nil
+}
+
 func (r *mongoDb) GetMany(ctx context.Context, userIDs []string) ([]model.User, error) {
 	userObjectIDs := []primitive.ObjectID{}
 	for _, userID := range userIDs {

@@ -10,35 +10,36 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Coordinate struct {
-	Lat        float64 `bson:"lat"`
-	Lng        float64 `bson:"lng"`
-	Speed      int     `bson:"speed"`
-	Satellites int     `bson:"satellites"`
+type Location struct {
+	Type        string    `bson:"type"`
+	Coordinates []float64 `bson:"coordinates"`
 }
 
 type ParcelTravel struct {
-	ID           primitive.ObjectID `bson:"_id"`
-	ParcelID     primitive.ObjectID `bson:"parcel_id"`
-	Coordinate   Coordinate         `bson:"coordinate"`
-	Temp         float32            `bson:"temp"`
-	Humid        float32            `bson:"humid"`
-	IsDoorOpen   bool               `bson:"is_door_open"`
-	Signal       int                `bson:"signal"`
-	GPSTimestamp primitive.DateTime `bson:"gps_timestamp"`
-	Timestamp    primitive.DateTime `bson:"timestamp"`
+	ID         primitive.ObjectID `bson:"_id"`
+	ParcelID   primitive.ObjectID `bson:"parcel_id"`
+	Loc        Location           `bson:"loc"`
+	Temp       float32            `bson:"temp"`
+	Hmd        float32            `bson:"hmd"`
+	DoorStatus int                `bson:"door_status"`
+	Sgnl       int                `bson:"sgnl"`
+	Spd        int                `bson:"spd"`
+	Sats       int                `bson:"sats"`
+	GPSTs      primitive.DateTime `bson:"gps_ts"`
+	Ts         primitive.DateTime `bson:"ts"`
 }
 
 const (
-	idField           = "_id"
-	parcelIdField     = "parcel_id"
-	coordinateField   = "coordinate"
-	tempField         = "temp"
-	humidField        = "humid"
-	isDoorOpenField   = "is_door_open"
-	signalField       = "signal"
-	gpsTimestampField = "gps_timestamp"
-	timestampField    = "timestamp"
+	idField         = "_id"
+	parcelIdField   = "parcel_id"
+	locField        = "loc"
+	tempField       = "temp"
+	hmdField        = "hmd"
+	doorStatusField = "door_status"
+	sgnlField       = "sgnl"
+	stlsField       = "stls"
+	gpsTsField      = "gps_ts"
+	tsField         = "ts"
 
 	gpsTimeFormat = "2006-01-02T15:04:05Z"
 )
@@ -50,20 +51,24 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 	}
 
 	timestamp := time.Now()
-	gpsTimestamp, err := time.Parse(gpsTimeFormat, createOneInput.GPSTimestamp)
+	gpsTimestamp, err := time.Parse(gpsTimeFormat, createOneInput.GPSTs)
 	if err != nil {
 		return err
 	}
 
 	doc := bson.D{
 		primitive.E{Key: parcelIdField, Value: parcelID},
-		primitive.E{Key: coordinateField, Value: Coordinate(createOneInput.Coordinate)},
+		primitive.E{Key: locField, Value: bson.D{
+			{Key: "type", Value: "Point"},
+			{Key: "coordinates", Value: []float64{createOneInput.Coor.Lat, createOneInput.Coor.Lng}},
+		}},
 		primitive.E{Key: tempField, Value: createOneInput.Temp},
-		primitive.E{Key: humidField, Value: createOneInput.Humid},
-		primitive.E{Key: isDoorOpenField, Value: createOneInput.IsDoorOpen},
-		primitive.E{Key: signalField, Value: createOneInput.Signal},
-		primitive.E{Key: gpsTimestampField, Value: primitive.NewDateTimeFromTime(gpsTimestamp.UTC())},
-		primitive.E{Key: timestampField, Value: primitive.NewDateTimeFromTime(timestamp.UTC())},
+		primitive.E{Key: hmdField, Value: createOneInput.Hmd},
+		primitive.E{Key: doorStatusField, Value: createOneInput.DoorStatus},
+		primitive.E{Key: sgnlField, Value: createOneInput.Sgnl},
+		primitive.E{Key: stlsField, Value: createOneInput.Stls},
+		primitive.E{Key: gpsTsField, Value: primitive.NewDateTimeFromTime(gpsTimestamp.UTC())},
+		primitive.E{Key: tsField, Value: primitive.NewDateTimeFromTime(timestamp.UTC())},
 	}
 
 	res, err := r.DbCollection.InsertOne(ctx, doc)
@@ -85,7 +90,7 @@ func (r *mongoDb) GetAll(ctx context.Context, getAllInput model.GetAllInput) ([]
 	}
 
 	filter := bson.D{
-		{parcelIdField, parcelID},
+		{Key: parcelIdField, Value: parcelID},
 	}
 	cursor, err := r.DbCollection.Find(ctx, filter, nil)
 	if err != nil {
@@ -101,15 +106,18 @@ func (r *mongoDb) GetAll(ctx context.Context, getAllInput model.GetAllInput) ([]
 			return []model.ParcelTravel{}, err
 		}
 		output = append(output, model.ParcelTravel{
-			ID:           elem.ID.Hex(),
-			ParcelID:     elem.ParcelID.Hex(),
-			Coordinate:   model.Coordinate(elem.Coordinate),
-			Temp:         elem.Temp,
-			Humid:        elem.Humid,
-			IsDoorOpen:   elem.IsDoorOpen,
-			Signal:       elem.Signal,
-			GPSTimestamp: elem.GPSTimestamp.Time(),
-			Timestamp:    elem.Timestamp.Time(),
+			ID:       elem.ID.Hex(),
+			ParcelID: elem.ParcelID.Hex(),
+			Coor: model.Coordinate{
+				Lat: elem.Loc.Coordinates[0],
+				Lng: elem.Loc.Coordinates[1],
+			},
+			Temp:       elem.Temp,
+			Hmd:        elem.Hmd,
+			DoorStatus: elem.DoorStatus,
+			Sgnl:       elem.Sgnl,
+			GPSTs:      elem.GPSTs.Time(),
+			Ts:         elem.Ts.Time(),
 		})
 	}
 

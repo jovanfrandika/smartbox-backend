@@ -13,7 +13,7 @@ func (s *storage) GetSignedUrl(object string) (string, error) {
 		Scheme: gcs.SigningSchemeV4,
 		Method: "PUT",
 		Headers: []string{
-			"Content-Type:application/octet-stream",
+			"Content-Type:image/jpeg",
 		},
 		Expires: time.Now().Add(15 * time.Minute),
 	}
@@ -26,13 +26,13 @@ func (s *storage) GetSignedUrl(object string) (string, error) {
 	return url, nil
 }
 
-func (s *storage) IsObjectValid(ctx context.Context, object string) bool {
+func (s *storage) GetObjectUpdatedAt(ctx context.Context, object string) (time.Time, error) {
 	obj := s.client.Bucket(s.config.BucketName).Object(object)
-	_, err := obj.Attrs(ctx)
+	attrs, err := obj.Attrs(ctx)
 	if err != nil {
 		log.Error("Invalid bucket object", 0)
-		return false
+		return time.Time{}, err
 	}
 
-	return true
+	return attrs.Updated, nil
 }

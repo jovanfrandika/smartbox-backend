@@ -20,11 +20,15 @@ func (u *usecase) ConsumeTravelLog(ctx context.Context, consumeTravelLogMessage 
 	}
 
 	err = (*u.parcelTravelDb).CreateOne(ctx, model.CreateOneInput{
-		ParcelID:     parcel.ID,
-		Coordinate:   consumeTravelLogMessage.Coordinate,
-		Signal:       consumeTravelLogMessage.Signal,
-		IsDoorOpen:   consumeTravelLogMessage.IsDoorOpen,
-		GPSTimestamp: consumeTravelLogMessage.GPSTimestamp,
+		ParcelID:   parcel.ID,
+		Coor:       consumeTravelLogMessage.Coor,
+		Temp:       consumeTravelLogMessage.Temp,
+		Hmd:        consumeTravelLogMessage.Hmd,
+		Sgnl:       consumeTravelLogMessage.Sgnl,
+		Spd:        consumeTravelLogMessage.Spd,
+		Stls:       consumeTravelLogMessage.Stls,
+		DoorStatus: consumeTravelLogMessage.DoorStatus,
+		GPSTs:      consumeTravelLogMessage.GPSTs,
 	})
 	if err != nil {
 		return err

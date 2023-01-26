@@ -40,12 +40,12 @@ func (u *usecase) GetAll(ctx context.Context) (model.GetAllResponse, error) {
 	}, nil
 }
 
-func (u *usecase) GetOneByName(ctx context.Context, getOneByName model.GetOneByNameInput) (model.GetOneByNameResponse, error) {
-	device, err := (*u.db).GetOneByName(ctx, getOneByName)
+func (u *usecase) GetOne(ctx context.Context, getOneInput model.GetOneInput) (model.GetOneResponse, error) {
+	device, err := (*u.db).GetOne(ctx, getOneInput)
 	if err != nil {
-		return model.GetOneByNameResponse{}, err
+		return model.GetOneResponse{}, err
 	}
-	return model.GetOneByNameResponse(device), nil
+	return model.GetOneResponse(device), nil
 }
 
 func (u *usecase) GetQRCode(ctx context.Context, getQRCodeInput model.GetQRCodeInput) (model.GetQRCodeResponse, error) {
@@ -56,7 +56,7 @@ func (u *usecase) GetQRCode(ctx context.Context, getQRCodeInput model.GetQRCodeI
 		return model.GetQRCodeResponse{}, err
 	}
 
-	encoded, err := qr.EncodeStringToPng(fmt.Sprintf("%s/device/name/%s", u.config.Host, device.Name))
+	encoded, err := qr.EncodeStringToPng(fmt.Sprintf("%s", device.ID))
 	if err != nil {
 		return model.GetQRCodeResponse{}, err
 	}

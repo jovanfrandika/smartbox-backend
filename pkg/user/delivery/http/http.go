@@ -65,6 +65,51 @@ func (d *delivery) Me(w h.ResponseWriter, r *h.Request) {
 	}
 }
 
+func (d *delivery) Search(w h.ResponseWriter, r *h.Request) {
+	var payload model.SearchInput
+	payload.Email = r.URL.Query().Get("email")
+	if payload.Email == "" {
+		log.Error("Invalid Payload", 0)
+		w.WriteHeader(h.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	var res model.SearchResponse
+	var err error
+	ch := make(chan int)
+	go func() {
+		res, err = d.usecase.Search(ctx, payload)
+		ch <- 1
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Error("Timeout", 0)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusRequestTimeout)
+		json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+			Error: commonModel.TIMEOUT_ERROR,
+		})
+		return
+	case <-ch:
+		if err != nil {
+			log.Error(err.Error(), 0)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(h.StatusInternalServerError)
+			json.NewEncoder(w).Encode(commonModel.ErrorResponse{
+				Error: commonModel.INTERVAL_SERVER_ERROR,
+			})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(h.StatusOK)
+		json.NewEncoder(w).Encode(res)
+	}
+}
+
 func (d *delivery) Login(w h.ResponseWriter, r *h.Request) {
 	var payload model.LoginInput
 	decoder := json.NewDecoder(r.Body)

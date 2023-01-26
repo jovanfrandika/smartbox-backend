@@ -8,9 +8,12 @@
         "required": [
           "name",
           "description",
-          "photo_uri",
-          "start",
-          "end",
+          "pick_up_loc",
+          "arrived_loc",
+          "pick_up_photo",
+          "arrived_photo",
+          "temp_thr",
+          "hmd_thr",
           "receiver_id",
           "sender_id",
           "courier_id",
@@ -26,52 +29,109 @@
             "bsonType": "string",
             "description": "'description' must be a string and is required"
           },
-          "photo_uri": {
-            "bsonType": "string",
-            "minLength": 53,
-            "description": "'photo_uri' must be a string with min 53 length and is required"
-          },
-          "start": {
+          "pick_up_loc": {
             "bsonType": ["object", "null"],
-            "description": "'start' must be an object or null and is required",
+            "description": "'pick_up_loc' must be an object or null and is required",
             "properties": {
-              "lat": {
-                "bsonType": "double",
-                "description": "'lat' must be a double"
+              "type": {
+                "bsonType": "string",
+                "enum": ["Point"],
+                "description": "'type' must be a string"
               },
-              "long": {
-                "bsonType": "double",
-                "description": "'long' must be a double"
-              },
-              "temp": {
-                "bsonType": "double",
-                "description": "'temp' must be a double"
-              },
-              "humid": {
-                "bsonType": "double",
-                "description": "'humid' must be a double"
+              "coordinates": {
+                "bsonType": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": [
+                  {
+                    "bsonType": "double",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  {
+                    "bsonType": "double",
+                    "minimum": -90,
+                    "maximum": 90 
+                  }
+                ],
+                "description": "'coordinates' must be an array of double"
               }
             }
           },
-          "end": {
+          "arrived_loc": {
             "bsonType": ["object", "null"],
-            "description": "'end' must be an object or null and is required",
+            "description": "'arrived_loc' must be an object or null and is required",
             "properties": {
-              "lat": {
-                "bsonType": "double",
-                "description": "'lat' must be a double"
+              "type": {
+                "bsonType": "string",
+                "enum": ["Point"],
+                "description": "'type' must be a string"
               },
-              "long": {
+              "coordinates": {
+                "bsonType": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": [
+                  {
+                    "bsonType": "double",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  {
+                    "bsonType": "double",
+                    "minimum": -90,
+                    "maximum": 90 
+                  }
+                ],
+                "description": "'coordinates' must be an array of double"
+              }
+            }
+          },
+          "pick_up_photo": {
+            "bsonType": ["object", "null"],
+            "description": "'pick_up_photo' must be an object or null and is required",
+            "properties": {
+              "updated_at": {
+                "bsonType": "date",
+                "description": "'updated_at' must be a date"
+              }
+            }
+          },
+          "arrived_photo": {
+            "bsonType": ["object", "null"],
+            "description": "'arrived_photo' must be an object or null and is required",
+            "properties": {
+              "updated_at": {
+                "bsonType": "date",
+                "description": "'updated_at' must be a date"
+              }
+            }
+          },
+          "temp_thr": {
+            "bsonType": ["object", "null"],
+            "description": "'temp_thr' must be an object or null and is required",
+            "properties": {
+              "low": {
                 "bsonType": "double",
-                "description": "'long' must be a double"
+                "description": "'low' must be a double"
               },
-              "temp": {
+              "high": {
                 "bsonType": "double",
-                "description": "'temp' must be a double"
+                "description": "'high' must be a double"
+              }
+            }
+          },
+          "hmd_thr": {
+            "bsonType": ["object", "null"],
+            "description": "'hmd_thr' must be an object or null and is required",
+            "properties": {
+              "low": {
+                "bsonType": "double",
+                "description": "'low' must be a double"
               },
-              "humid": {
+              "high": {
                 "bsonType": "double",
-                "description": "'humid' must be a double"
+                "description": "'high' must be a double"
               }
             }
           },
@@ -126,6 +186,18 @@
           "device_id": 1
         },
         "name": "device_id"
+      },
+      {
+        "key": {
+          "pick_up_loc": "2dsphere"
+        },
+        "name": "pick_up_loc_2dsphere"
+      },
+      {
+        "key": {
+          "arrived_loc": "2dsphere"
+        },
+        "name": "arrived_2dsphere"
       }
     ]
   }

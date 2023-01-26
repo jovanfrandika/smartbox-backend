@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"fmt"
 
 	deviceModel "github.com/jovanfrandika/smartbox-backend/pkg/device/model"
 	"github.com/jovanfrandika/smartbox-backend/pkg/parcel/model"
@@ -11,9 +12,14 @@ import (
 	userModel "github.com/jovanfrandika/smartbox-backend/pkg/user/model"
 )
 
-const CODE_CHARS = "1234567890"
+const (
+	CODE_CHARS     = "1234567890"
+	PickUpDir      = "pick-up"
+	ArrivedDir     = "arrived"
+	PhotoUrlFormat = "%s/%s/%s/%s"
+)
 
-func GenerateCode(length int) (string, error) {
+func generateCode(length int) (string, error) {
 	buffer := make([]byte, length)
 	_, err := rand.Read(buffer)
 	if err != nil {
@@ -92,10 +98,23 @@ func (u *usecase) buildFullParcel(ctx context.Context, parcels []model.Parcel) (
 			ID:          rawParcel.ID,
 			Name:        rawParcel.Name,
 			Description: rawParcel.Name,
-			PhotoUri:    rawParcel.PhotoUri,
-			Start:       rawParcel.Start,
-			End:         rawParcel.End,
+			PickUpCoor:  rawParcel.PickUpCoor,
+			ArrivedCoor: rawParcel.ArrivedCoor,
+			TempThr:     rawParcel.TempThr,
+			HmdThr:      rawParcel.HmdThr,
 			Status:      rawParcel.Status,
+		}
+		if rawParcel.PickUpPhoto != nil {
+			parcel.PickUpPhoto = &model.FullPhoto{
+				Uri:       u.buildPhotoUrl(rawParcel, model.PICK_UP_STATUS),
+				UpdatedAt: rawParcel.PickUpPhoto.UpdatedAt,
+			}
+		}
+		if rawParcel.ArrivedPhoto != nil {
+			parcel.ArrivedPhoto = &model.FullPhoto{
+				Uri:       u.buildPhotoUrl(rawParcel, model.ARRIVED_STATUS),
+				UpdatedAt: rawParcel.ArrivedPhoto.UpdatedAt,
+			}
 		}
 		if rawParcel.SenderID != parcelCol.EmptyObjectId {
 			user, _ := userMap[rawParcel.SenderID]
@@ -124,4 +143,19 @@ func (u *usecase) buildFullParcel(ctx context.Context, parcels []model.Parcel) (
 	}
 
 	return output, nil
+}
+
+func (u *usecase) buildPhotoUri(parcel model.Parcel, status int) string {
+	switch status {
+	case model.PICK_UP_STATUS:
+		return fmt.Sprintf(PhotoUrlFormat, u.config.DBName, PickUpDir, parcel.SenderID, parcel.ID)
+	case model.ARRIVED_STATUS:
+		return fmt.Sprintf(PhotoUrlFormat, u.config.DBName, ArrivedDir, parcel.SenderID, parcel.ID)
+	default:
+		return ""
+	}
+}
+
+func (u *usecase) buildPhotoUrl(parcel model.Parcel, status int) string {
+	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.config.BucketName, u.buildPhotoUri(parcel, status))
 }

@@ -18,7 +18,7 @@ type MongoDb interface {
 }
 
 const (
-	collectionName = "device"
+	collectionName = "friendship"
 )
 
 func New(dbClient *mongo.Database) MongoDb {

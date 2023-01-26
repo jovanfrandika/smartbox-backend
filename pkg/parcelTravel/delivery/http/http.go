@@ -18,7 +18,7 @@ const (
 
 func (d *delivery) GetAll(w h.ResponseWriter, r *h.Request) {
 	parcelID := r.URL.Query().Get("parcel_id")
-	if parcelID != "" {
+	if parcelID == "" {
 		log.Error("Invalid Payload", 0)
 		w.WriteHeader(h.StatusBadRequest)
 		return

@@ -3,32 +3,34 @@ package model
 import "time"
 
 type Coordinate struct {
-	Lat        float64 `json:"lat"`
-	Lng        float64 `json:"lng"`
-	Speed      int     `json:"speed"`
-	Satellites int     `json:"satellites"`
+	Lat float64 `json:"lat"`
+	Lng float64 `json:"lng"`
 }
 
 type ParcelTravel struct {
-	ID           string     `json:"id"`
-	ParcelID     string     `json:"parcel_id"`
-	Coordinate   Coordinate `json:"coordinate"`
-	Temp         float32    `json:"temp"`
-	Humid        float32    `json:"humid"`
-	IsDoorOpen   bool       `json:"is_door_open"`
-	Signal       int        `json:"signal"`
-	GPSTimestamp time.Time  `json:"gps_timestamp"`
-	Timestamp    time.Time  `json:"timestamp"`
+	ID         string     `json:"id"`
+	ParcelID   string     `json:"parcel_id"`
+	Coor       Coordinate `json:"coor"`
+	Temp       float32    `json:"temp"`
+	Hmd        float32    `json:"hmd"`
+	DoorStatus int        `json:"door_status"`
+	Sgnl       int        `json:"sgnl"`
+	Spd        int        `json:"spd"`
+	Stls       int        `json:"stls"`
+	GPSTs      time.Time  `json:"gps_ts"`
+	Ts         time.Time  `json:"ts"`
 }
 
 type CreateOneInput struct {
-	ParcelID     string     `json:"parcel_id"`
-	Coordinate   Coordinate `json:"coordinate"`
-	Temp         float32    `json:"temp"`
-	Humid        float32    `json:"humid"`
-	IsDoorOpen   bool       `json:"is_door_open"`
-	Signal       int        `json:"signal"`
-	GPSTimestamp string     `json:"gps_timestamp"`
+	ParcelID   string     `json:"parcel_id"`
+	Coor       Coordinate `json:"coor"`
+	Temp       float32    `json:"temp"`
+	Hmd        float32    `json:"hmd"`
+	DoorStatus bool       `json:"door_status"`
+	Sgnl       int        `json:"sgnl"`
+	Spd        int        `json:"spd"`
+	Stls       int        `json:"stls"`
+	GPSTs      string     `json:"gps_ts"`
 }
 
 type GetAllInput struct {
@@ -40,11 +42,13 @@ type GetAllResponse struct {
 }
 
 type ConsumeTravelLogMessage struct {
-	DeviceName   string     `json:"device_name"`
-	Coordinate   Coordinate `json:"coordinate"`
-	Temp         float32    `json:"temp"`
-	Humid        float32    `json:"humid"`
-	IsDoorOpen   bool       `json:"is_door_open"`
-	Signal       int        `json:"signal"`
-	GPSTimestamp string     `json:"gps_timestamp"`
+	DeviceName string     `json:"device_name"`
+	Coor       Coordinate `json:"coor"`
+	Temp       float32    `json:"temp"`
+	Hmd        float32    `json:"hmd"`
+	DoorStatus bool       `json:"door_status"`
+	Sgnl       int        `json:"sgnl"`
+	Spd        int        `json:"spd"`
+	Stls       int        `json:"stls"`
+	GPSTs      string     `json:"gps_ts"`
 }

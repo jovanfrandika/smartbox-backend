@@ -39,6 +39,13 @@
         },
         "name": "Unique email",
         "unique": true
+      },
+      {
+        "key": {
+          "email": "text"
+        },
+        "name": "Email text",
+        "unique": true
       }
     ]
   }

@@ -27,6 +27,17 @@ func (u *usecase) Me(ctx context.Context, meInput model.MeInput) (model.MeRespon
 	}, nil
 }
 
+func (u *usecase) Search(ctx context.Context, searchInput model.SearchInput) (model.SearchResponse, error) {
+	users, err := (*u.db).Search(ctx, searchInput.Email)
+	if err != nil {
+		return model.SearchResponse{}, err
+	}
+
+	return model.SearchResponse{
+		Users: users,
+	}, nil
+}
+
 func (u *usecase) Register(ctx context.Context, registerInput model.RegisterInput) (model.RegisterResponse, error) {
 	userID, err := (*u.db).CreateUser(ctx, registerInput)
 	if err != nil {

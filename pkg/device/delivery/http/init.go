@@ -17,6 +17,6 @@ func Deliver(r *chi.Mux, usecase u.Usecase) {
 
 	(*r).With(jwt.AuthMiddleware).Get("/", d.GetAll)
 	(*r).With(jwt.AuthMiddleware).Post("/", d.CreateOne)
-	(*r).With(jwt.AuthMiddleware).Get("/name/{deviceName}", d.GetOneByName)
+	(*r).With(jwt.AuthMiddleware).Get("/one/{ID}", d.GetOne)
 	(*r).With(jwt.AuthMiddleware).Get("/qr/{deviceID}.png", d.GetQRCode)
 }

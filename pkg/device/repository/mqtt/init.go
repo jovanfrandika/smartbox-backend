@@ -10,7 +10,8 @@ type mq struct {
 
 type Mqtt interface {
 	PubOpenDoor(deviceName string) error
-	PubStartTravel(deviceName string, lat float32, lng float32) error
+	PubCloseDoor(deviceName string) error
+	PubStartTravel(deviceName string) error
 	PubEndTravel(deviceName string) error
 	PubStatus(deviceName string) error
 }
