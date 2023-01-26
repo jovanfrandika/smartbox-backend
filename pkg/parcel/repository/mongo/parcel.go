@@ -169,14 +169,14 @@ func (r *mongoDb) UpdateOne(ctx context.Context, updateOneInput model.UpdateOneI
 	if updateOneInput.PickUpCoor != nil {
 		pickUpLoc = &bson.D{
 			{Key: "type", Value: "Point"},
-			{Key: "coordinates", Value: []float64{updateOneInput.PickUpCoor.Lat, updateOneInput.PickUpCoor.Lng}},
+			{Key: "coordinates", Value: []float64{updateOneInput.PickUpCoor.Lng, updateOneInput.PickUpCoor.Lat}},
 		}
 	}
 	var arrivedLoc *bson.D
 	if updateOneInput.ArrivedCoor != nil {
 		arrivedLoc = &bson.D{
 			{Key: "type", Value: "Point"},
-			{Key: "coordinates", Value: []float64{updateOneInput.ArrivedCoor.Lat, updateOneInput.ArrivedCoor.Lng}},
+			{Key: "coordinates", Value: []float64{updateOneInput.ArrivedCoor.Lng, updateOneInput.ArrivedCoor.Lat}},
 		}
 	}
 	var pickUpPhoto *Photo
@@ -282,7 +282,7 @@ func (r *mongoDb) GetNearbyPickUps(ctx context.Context, getNearbyPickUpsInput mo
 						Value: bson.D{
 							{Key: "$geometry", Value: bson.D{
 								{Key: "type", Value: "Point"},
-								{Key: "coordinates", Value: []float64{getNearbyPickUpsInput.UserCoor.Lat, getNearbyPickUpsInput.UserCoor.Lng}},
+								{Key: "coordinates", Value: []float64{getNearbyPickUpsInput.UserCoor.Lng, getNearbyPickUpsInput.UserCoor.Lat}},
 							}},
 							{Key: "$maxDistance", Value: 5000}, // in meters
 						},

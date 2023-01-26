@@ -6,15 +6,15 @@ func buildParcel(parcel Parcel) model.Parcel {
 	var pickUpCoor *model.Coordinate
 	if parcel.PickUpLoc != nil {
 		pickUpCoor = &model.Coordinate{
-			Lat: parcel.PickUpLoc.Coordinates[0],
-			Lng: parcel.PickUpLoc.Coordinates[1],
+			Lat: parcel.PickUpLoc.Coordinates[1],
+			Lng: parcel.PickUpLoc.Coordinates[0],
 		}
 	}
 	var arrivedCoor *model.Coordinate
 	if parcel.ArrivedLoc != nil {
 		arrivedCoor = &model.Coordinate{
-			Lat: parcel.ArrivedLoc.Coordinates[0],
-			Lng: parcel.ArrivedLoc.Coordinates[1],
+			Lat: parcel.ArrivedLoc.Coordinates[1],
+			Lng: parcel.ArrivedLoc.Coordinates[0],
 		}
 	}
 	var pickUpPhoto *model.Photo

@@ -60,7 +60,7 @@ func (r *mongoDb) CreateOne(ctx context.Context, createOneInput model.CreateOneI
 		primitive.E{Key: parcelIdField, Value: parcelID},
 		primitive.E{Key: locField, Value: bson.D{
 			{Key: "type", Value: "Point"},
-			{Key: "coordinates", Value: []float64{createOneInput.Coor.Lat, createOneInput.Coor.Lng}},
+			{Key: "coordinates", Value: []float64{createOneInput.Coor.Lng, createOneInput.Coor.Lat}},
 		}},
 		primitive.E{Key: tempField, Value: createOneInput.Temp},
 		primitive.E{Key: hmdField, Value: createOneInput.Hmd},
@@ -109,8 +109,8 @@ func (r *mongoDb) GetAll(ctx context.Context, getAllInput model.GetAllInput) ([]
 			ID:       elem.ID.Hex(),
 			ParcelID: elem.ParcelID.Hex(),
 			Coor: model.Coordinate{
-				Lat: elem.Loc.Coordinates[0],
-				Lng: elem.Loc.Coordinates[1],
+				Lat: elem.Loc.Coordinates[1],
+				Lng: elem.Loc.Coordinates[0],
 			},
 			Temp:       elem.Temp,
 			Hmd:        elem.Hmd,
