@@ -44,8 +44,7 @@
         "key": {
           "email": "text"
         },
-        "name": "Email text",
-        "unique": true
+        "name": "Email text"
       }
     ]
   }
