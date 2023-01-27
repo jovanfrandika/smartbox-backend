@@ -97,7 +97,7 @@ func (u *usecase) buildFullParcel(ctx context.Context, parcels []model.Parcel) (
 		parcel := model.FullParcel{
 			ID:          rawParcel.ID,
 			Name:        rawParcel.Name,
-			Description: rawParcel.Name,
+			Description: rawParcel.Description,
 			PickUpCoor:  rawParcel.PickUpCoor,
 			ArrivedCoor: rawParcel.ArrivedCoor,
 			TempThr:     rawParcel.TempThr,

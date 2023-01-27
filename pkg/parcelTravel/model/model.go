@@ -26,7 +26,7 @@ type CreateOneInput struct {
 	Coor       Coordinate `json:"coor"`
 	Temp       float32    `json:"temp"`
 	Hmd        float32    `json:"hmd"`
-	DoorStatus bool       `json:"door_status"`
+	DoorStatus int        `json:"door_status"`
 	Sgnl       int        `json:"sgnl"`
 	Spd        int        `json:"spd"`
 	Stls       int        `json:"stls"`
@@ -46,7 +46,7 @@ type ConsumeTravelLogMessage struct {
 	Coor       Coordinate `json:"coor"`
 	Temp       float32    `json:"temp"`
 	Hmd        float32    `json:"hmd"`
-	DoorStatus bool       `json:"door_status"`
+	DoorStatus int        `json:"door_status"`
 	Sgnl       int        `json:"sgnl"`
 	Spd        int        `json:"spd"`
 	Stls       int        `json:"stls"`
