@@ -159,7 +159,7 @@ func (u *usecase) SendParcelCode(ctx context.Context, sendParcelCodeInput model.
 		return errors.New("Insufficient Permission")
 	}
 
-	if !(sendParcelCodeInput.UserID == parcel.ReceiverID || sendParcelCodeInput.UserID == parcel.SenderID) {
+	if !(sendParcelCodeInput.ToUserID == parcel.ReceiverID || sendParcelCodeInput.ToUserID == parcel.SenderID) {
 		return errors.New("Wrong code recipient")
 	}
 
